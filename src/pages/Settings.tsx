@@ -82,6 +82,15 @@ const Settings = () => {
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
+              <div>
+                <Label htmlFor="gstNumber">GST Number</Label>
+                <Input
+                  id="gstNumber"
+                  value={formData.gstNumber || ''}
+                  onChange={(e) => handleChange('gstNumber', e.target.value)}
+                  placeholder="Enter your business GST number"
+                />
+              </div>
             </div>
 
             <div>
