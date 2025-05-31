@@ -39,10 +39,10 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
 
   const templateStyles = {
     classic: {
-      headerBg: 'bg-blue-600',
-      headerText: 'text-white',
-      accentColor: 'text-blue-600',
-      borderColor: 'border-blue-200',
+      headerBg: 'bg-simplr-primary',
+      headerText: 'text-simplr-on-dark',
+      accentColor: 'text-simplr-primary',
+      borderColor: 'border-simplr-accent',
     },
     modern: {
       headerBg: 'bg-gray-800',
@@ -51,10 +51,10 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
       borderColor: 'border-gray-200',
     },
     creative: {
-      headerBg: 'bg-purple-600',
-      headerText: 'text-white',
-      accentColor: 'text-purple-600',
-      borderColor: 'border-purple-200',
+      headerBg: 'bg-simplr-accent',
+      headerText: 'text-simplr-primary',
+      accentColor: 'text-simplr-accent',
+      borderColor: 'border-simplr-accent',
     },
     professional: {
       headerBg: 'bg-slate-700',
@@ -92,6 +92,9 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
             {companySettings.email && (
               <div className="text-sm opacity-90">{companySettings.email}</div>
             )}
+            {companySettings.hasGST && companySettings.gstNumber && (
+              <div className="text-sm opacity-90 mt-1">GST: {companySettings.gstNumber}</div>
+            )}
           </div>
         </div>
       </div>
@@ -114,6 +117,9 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
                 )}
                 <div className="text-gray-600">{client.email}</div>
                 {client.phone && <div className="text-gray-600">{client.phone}</div>}
+                {(client as any).hasGST && (client as any).gstNumber && (
+                  <div className="text-gray-600">GST: {(client as any).gstNumber}</div>
+                )}
               </div>
             ) : (
               <div className="text-gray-400 text-sm">Select a client</div>

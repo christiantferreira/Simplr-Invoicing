@@ -31,6 +31,8 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
     phone: '',
     address: '',
     company: '',
+    hasGST: false,
+    gstNumber: '',
   });
 
   useEffect(() => {
@@ -41,6 +43,8 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
         phone: editingClient.phone || '',
         address: editingClient.address || '',
         company: editingClient.company || '',
+        hasGST: (editingClient as any).hasGST || false,
+        gstNumber: (editingClient as any).gstNumber || '',
       });
     } else {
       setFormData({
@@ -49,6 +53,8 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
         phone: '',
         address: '',
         company: '',
+        hasGST: false,
+        gstNumber: '',
       });
     }
   }, [editingClient, isOpen]);
@@ -68,7 +74,7 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
     onClose();
   };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -76,7 +82,7 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-simplr-primary">
             {editingClient ? 'Edit Client' : 'Add New Client'}
           </DialogTitle>
         </DialogHeader>
@@ -123,6 +129,32 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
               placeholder="Company name"
             />
           </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="hasGST"
+                checked={formData.hasGST}
+                onChange={(e) => handleChange('hasGST', e.target.checked)}
+                className="rounded border-gray-300 text-simplr-accent focus:ring-simplr-accent"
+              />
+              <Label htmlFor="hasGST">Does your business have a GST Number?</Label>
+            </div>
+            
+            {formData.hasGST && (
+              <div>
+                <Label htmlFor="gstNumber">GST Number *</Label>
+                <Input
+                  id="gstNumber"
+                  value={formData.gstNumber}
+                  onChange={(e) => handleChange('gstNumber', e.target.value)}
+                  placeholder="Enter GST Number"
+                  required={formData.hasGST}
+                />
+              </div>
+            )}
+          </div>
           
           <div>
             <Label htmlFor="address">Address</Label>
@@ -139,7 +171,7 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-blue-500 hover:bg-blue-600">
+            <Button type="submit" className="btn-simplr hover:bg-purple-600">
               {editingClient ? 'Update Client' : 'Add Client'}
             </Button>
           </div>

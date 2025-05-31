@@ -1,4 +1,3 @@
-
 export interface CompanySettings {
   id: string;
   name: string;
@@ -8,6 +7,8 @@ export interface CompanySettings {
   logo?: string;
   primaryColor: string;
   secondaryColor: string;
+  hasGST?: boolean;
+  gstNumber?: string;
 }
 
 export interface Client {
