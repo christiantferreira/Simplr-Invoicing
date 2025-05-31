@@ -25,7 +25,7 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-500 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 bg-simplr-accent rounded-2xl mx-auto mb-4 flex items-center justify-center hover:bg-purple-600 transition-colors">
             <span className="text-white font-bold text-2xl">S</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Simplr Invoicing</h1>
