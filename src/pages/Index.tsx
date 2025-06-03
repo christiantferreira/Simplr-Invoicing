@@ -15,28 +15,54 @@ import Onboarding from '@/pages/Onboarding';
 import { useEffect, useState } from 'react';
 
 const AppContent = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [hasCompletedSetup, setHasCompletedSetup] = useState<boolean | null>(null);
+  const [setupLoading, setSetupLoading] = useState(false);
+
+  console.log('AppContent render:', { user: !!user, authLoading, hasCompletedSetup, setupLoading });
 
   useEffect(() => {
     const checkSetupStatus = async () => {
-      if (user) {
-        // Check if user has completed company setup in database
-        const { data } = await supabase.from('company_info')
+      console.log('Checking setup status for user:', !!user);
+      
+      if (!user) {
+        console.log('No user, setting hasCompletedSetup to null');
+        setHasCompletedSetup(null);
+        setSetupLoading(false);
+        return;
+      }
+
+      setSetupLoading(true);
+      try {
+        console.log('Fetching company info for user:', user.id);
+        const { data, error } = await supabase
+          .from('company_info')
           .select('id')
           .eq('user_id', user.id)
           .maybeSingle();
         
-        setHasCompletedSetup(!!data);
-      } else {
-        setHasCompletedSetup(null);
+        console.log('Company info result:', { data, error });
+        
+        if (error) {
+          console.error('Error fetching company info:', error);
+          setHasCompletedSetup(false);
+        } else {
+          setHasCompletedSetup(!!data);
+        }
+      } catch (error) {
+        console.error('Exception checking setup status:', error);
+        setHasCompletedSetup(false);
+      } finally {
+        setSetupLoading(false);
       }
     };
 
     checkSetupStatus();
   }, [user]);
 
-  if (loading || hasCompletedSetup === null) {
+  // Show loading spinner while auth is loading or while checking setup
+  if (authLoading || (user && setupLoading)) {
+    console.log('Showing loading spinner');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -44,14 +70,30 @@ const AppContent = () => {
     );
   }
 
+  // If no user, show auth page
   if (!user) {
+    console.log('No user, showing Auth page');
     return <Auth />;
   }
 
-  if (!hasCompletedSetup) {
+  // If user exists but hasn't completed setup, show onboarding
+  if (hasCompletedSetup === false) {
+    console.log('User exists but setup not completed, showing Onboarding');
     return <Onboarding />;
   }
 
+  // If setup status is still being checked, show loading
+  if (hasCompletedSetup === null) {
+    console.log('Setup status unknown, showing loading');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // User is authenticated and has completed setup
+  console.log('User authenticated and setup complete, showing main app');
   return (
     <InvoiceProvider>
       <Layout>
