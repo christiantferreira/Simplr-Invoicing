@@ -6,41 +6,62 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
-import { CompanySettings } from '@/types';
+import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 const Onboarding = () => {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<Partial<CompanySettings>>({
-    name: '',
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    company_name: '',
     address: '',
-    phone: '',
+    phone_number: '',
     email: '',
-    primaryColor: '#3B82F6',
-    secondaryColor: '#6B7280',
+    gst_number: '',
+    primary_color: '#3B82F6',
+    secondary_color: '#6B7280',
   });
 
   const totalSteps = 4;
   const progress = (currentStep / totalSteps) * 100;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     } else {
       // Complete setup
-      const companySettings: CompanySettings = {
-        id: '1',
-        name: formData.name || 'My Company',
-        address: formData.address,
-        phone: formData.phone,
-        email: formData.email,
-        primaryColor: formData.primaryColor || '#3B82F6',
-        secondaryColor: formData.secondaryColor || '#6B7280',
-      };
-      
-      localStorage.setItem('simplr_company_setup', 'true');
-      localStorage.setItem('simplr_company_settings', JSON.stringify(companySettings));
-      window.location.reload();
+      setLoading(true);
+      try {
+        const { error } = await supabase
+          .from('company_info')
+          .insert({
+            user_id: user?.id,
+            company_name: formData.company_name || 'My Company',
+            address: formData.address,
+            phone_number: formData.phone_number,
+            email: formData.email,
+            gst_number: formData.gst_number,
+            primary_color: formData.primary_color,
+            secondary_color: formData.secondary_color,
+          });
+
+        if (error) {
+          toast.error('Error saving company information');
+          console.error('Error:', error);
+          return;
+        }
+
+        toast.success('Company setup completed!');
+        window.location.reload();
+      } catch (error) {
+        toast.error('An unexpected error occurred');
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -50,7 +71,7 @@ const Onboarding = () => {
     }
   };
 
-  const updateFormData = (field: keyof CompanySettings, value: string) => {
+  const updateFormData = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -63,8 +84,8 @@ const Onboarding = () => {
               <Label htmlFor="companyName">Company Name *</Label>
               <Input
                 id="companyName"
-                value={formData.name || ''}
-                onChange={(e) => updateFormData('name', e.target.value)}
+                value={formData.company_name}
+                onChange={(e) => updateFormData('company_name', e.target.value)}
                 placeholder="Enter your company name"
                 required
               />
@@ -74,7 +95,7 @@ const Onboarding = () => {
               <Input
                 id="email"
                 type="email"
-                value={formData.email || ''}
+                value={formData.email}
                 onChange={(e) => updateFormData('email', e.target.value)}
                 placeholder="your@email.com"
                 required
@@ -84,16 +105,25 @@ const Onboarding = () => {
               <Label htmlFor="phone">Phone Number</Label>
               <Input
                 id="phone"
-                value={formData.phone || ''}
-                onChange={(e) => updateFormData('phone', e.target.value)}
+                value={formData.phone_number}
+                onChange={(e) => updateFormData('phone_number', e.target.value)}
                 placeholder="+1 (555) 123-4567"
+              />
+            </div>
+            <div>
+              <Label htmlFor="gstNumber">GST Number</Label>
+              <Input
+                id="gstNumber"
+                value={formData.gst_number}
+                onChange={(e) => updateFormData('gst_number', e.target.value)}
+                placeholder="Enter your business GST number"
               />
             </div>
             <div>
               <Label htmlFor="address">Business Address</Label>
               <Textarea
                 id="address"
-                value={formData.address || ''}
+                value={formData.address}
                 onChange={(e) => updateFormData('address', e.target.value)}
                 placeholder="123 Business St, City, State 12345"
                 rows={3}
@@ -127,13 +157,13 @@ const Onboarding = () => {
               <div className="flex items-center space-x-4 mt-2">
                 <input
                   type="color"
-                  value={formData.primaryColor}
-                  onChange={(e) => updateFormData('primaryColor', e.target.value)}
+                  value={formData.primary_color}
+                  onChange={(e) => updateFormData('primary_color', e.target.value)}
                   className="w-12 h-12 rounded border-2 border-gray-300"
                 />
                 <Input
-                  value={formData.primaryColor}
-                  onChange={(e) => updateFormData('primaryColor', e.target.value)}
+                  value={formData.primary_color}
+                  onChange={(e) => updateFormData('primary_color', e.target.value)}
                   placeholder="#3B82F6"
                   className="flex-1"
                 />
@@ -144,13 +174,13 @@ const Onboarding = () => {
               <div className="flex items-center space-x-4 mt-2">
                 <input
                   type="color"
-                  value={formData.secondaryColor}
-                  onChange={(e) => updateFormData('secondaryColor', e.target.value)}
+                  value={formData.secondary_color}
+                  onChange={(e) => updateFormData('secondary_color', e.target.value)}
                   className="w-12 h-12 rounded border-2 border-gray-300"
                 />
                 <Input
-                  value={formData.secondaryColor}
-                  onChange={(e) => updateFormData('secondaryColor', e.target.value)}
+                  value={formData.secondary_color}
+                  onChange={(e) => updateFormData('secondary_color', e.target.value)}
                   placeholder="#6B7280"
                   className="flex-1"
                 />
@@ -160,10 +190,10 @@ const Onboarding = () => {
               <h4 className="font-medium mb-2">Preview</h4>
               <div 
                 className="p-4 rounded text-white"
-                style={{ backgroundColor: formData.primaryColor }}
+                style={{ backgroundColor: formData.primary_color }}
               >
                 <h5 className="font-semibold">Invoice Header</h5>
-                <p style={{ color: formData.secondaryColor }}>
+                <p style={{ color: formData.secondary_color }}>
                   This is how your brand colors will appear
                 </p>
               </div>
@@ -219,6 +249,16 @@ const Onboarding = () => {
     }
   };
 
+  const isNextDisabled = () => {
+    if (currentStep === 1) {
+      return !formData.company_name || !formData.email;
+    }
+    if (currentStep === totalSteps) {
+      return loading;
+    }
+    return false;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
       <div className="w-full max-w-lg">
@@ -246,7 +286,7 @@ const Onboarding = () => {
               <Button
                 variant="outline"
                 onClick={handleBack}
-                disabled={currentStep === 1}
+                disabled={currentStep === 1 || loading}
                 className="flex items-center"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -254,11 +294,12 @@ const Onboarding = () => {
               </Button>
               <Button
                 onClick={handleNext}
-                disabled={currentStep === 1 && (!formData.name || !formData.email)}
+                disabled={isNextDisabled()}
                 className="flex items-center bg-blue-500 hover:bg-blue-600"
               >
+                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {currentStep === totalSteps ? 'Complete Setup' : 'Next'}
-                {currentStep !== totalSteps && <ArrowRight className="w-4 h-4 ml-2" />}
+                {currentStep !== totalSteps && !loading && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
             </div>
           </CardContent>

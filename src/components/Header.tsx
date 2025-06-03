@@ -8,16 +8,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface HeaderProps {
   onMenuClick: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
-  const handleLogout = () => {
-    localStorage.removeItem('simplr_auth');
-    localStorage.removeItem('simplr_company_setup');
-    window.location.reload();
+  const { user, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+      window.location.href = '/';
+    } catch (error) {
+      toast.error('Error signing out');
+    }
   };
 
   return (
@@ -54,6 +62,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-white z-50">
+            <div className="px-2 py-1.5 text-sm text-gray-700">
+              {user?.email}
+            </div>
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Sign out
