@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Users, DollarSign, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 const Dashboard = () => {
   const { state, getDashboardStats } = useInvoice();
   const stats = getDashboardStats();
+  const navigate = useNavigate();
 
   const recentInvoices = state.invoices
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -21,6 +22,10 @@ const Dashboard = () => {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
+  };
+
+  const handleStatCardClick = (filterType: string) => {
+    navigate(`/invoices?filter=${filterType}`);
   };
 
   return (
@@ -59,7 +64,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          onClick={() => handleStatCardClick('pending')} 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Invoices</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -72,7 +80,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          onClick={() => handleStatCardClick('overdue')} 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Overdue Invoices</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />

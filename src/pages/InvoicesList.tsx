@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Search, Eye, Edit, Copy, Send, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,28 @@ const InvoicesList = () => {
   const { state, updateInvoice, deleteInvoice } = useInvoice();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Extract filter from URL query params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const filterParam = params.get('filter');
+    
+    if (filterParam) {
+      if (filterParam === 'pending' || filterParam === 'overdue' || 
+          filterParam === 'draft' || filterParam === 'sent' || 
+          filterParam === 'paid' || filterParam === 'all') {
+        setActiveTab(filterParam);
+      }
+    }
+  }, [location.search]);
+
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`/invoices?filter=${value}`, { replace: true });
+  };
 
   const filteredInvoices = state.invoices.filter(invoice => {
     const client = state.clients.find(c => c.id === invoice.clientId);
@@ -31,6 +53,22 @@ const InvoicesList = () => {
       client?.name.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (activeTab === 'all') return matchesSearch;
+    if (activeTab === 'pending') {
+      // Pending invoices are those that are sent but not paid and not overdue
+      const dueDate = new Date(invoice.dueDate);
+      const today = new Date();
+      return matchesSearch && 
+             (invoice.status === 'sent' || invoice.status === 'viewed') && 
+             dueDate >= today;
+    }
+    if (activeTab === 'overdue') {
+      // Overdue invoices are past due date and not paid
+      const dueDate = new Date(invoice.dueDate);
+      const today = new Date();
+      return matchesSearch && 
+             invoice.status !== 'paid' && 
+             dueDate < today;
+    }
     return matchesSearch && invoice.status === activeTab;
   });
 
@@ -112,7 +150,7 @@ const InvoicesList = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="all" className="flex items-center space-x-2">
                 <span>All</span>
