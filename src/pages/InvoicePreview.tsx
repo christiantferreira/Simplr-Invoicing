@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Download, Send, Printer, Link as LinkIcon, Edit, ArrowLeft } from 'lucide-react';
+import { Download, Send, Printer, Link as LinkIcon, Edit, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSupabaseInvoices } from '@/hooks/useSupabaseInvoices';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +14,7 @@ const InvoicePreview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { invoices, clients, loading } = useSupabaseInvoices();
+  const { invoices, clients, loading, error, refetch } = useSupabaseInvoices();
   const [showSendModal, setShowSendModal] = useState(false);
   const [companySettings, setCompanySettings] = useState(null);
 
@@ -44,19 +44,81 @@ const InvoicePreview = () => {
             hasGST: !!data.gst_number,
             gstNumber: data.gst_number || '',
           });
+        } else {
+          // Create default company settings
+          setCompanySettings({
+            id: 'default',
+            name: 'Your Company Name',
+            address: 'Your Company Address',
+            phone: 'Your Phone Number',
+            email: 'your@email.com',
+            primaryColor: '#3B82F6',
+            secondaryColor: '#10B981',
+            hasGST: false,
+            gstNumber: '',
+          });
         }
       } catch (error) {
         console.error('Error loading company settings:', error);
+        // Use default settings if there's an error
+        setCompanySettings({
+          id: 'default',
+          name: 'Your Company Name',
+          address: 'Your Company Address',
+          phone: 'Your Phone Number',
+          email: 'your@email.com',
+          primaryColor: '#3B82F6',
+          secondaryColor: '#10B981',
+          hasGST: false,
+          gstNumber: '',
+        });
       }
     };
 
     loadCompanySettings();
   }, [user]);
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h1>
+          <p className="text-gray-600 mb-6">Please log in to view invoices.</p>
+          <Button onClick={() => navigate('/auth')}>
+            Log In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading invoice...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Invoice</h1>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="space-x-4">
+            <Button onClick={refetch} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+            <Button onClick={() => navigate('/invoices')}>
+              Back to Invoices
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -66,13 +128,30 @@ const InvoicePreview = () => {
 
   if (!invoice) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invoice Not Found</h1>
-          <p className="text-gray-600 mb-6">The invoice you're looking for doesn't exist.</p>
-          <Button onClick={() => navigate('/invoices')}>
-            Back to Invoices
-          </Button>
+          <p className="text-gray-600 mb-2">The invoice with ID "{id}" doesn't exist.</p>
+          <p className="text-sm text-gray-500 mb-6">
+            {invoices.length === 0 
+              ? "No invoices found. Sample data will be created automatically."
+              : `Available invoices: ${invoices.map(inv => inv.invoiceNumber).join(', ')}`
+            }
+          </p>
+          <div className="space-x-4">
+            <Button onClick={refetch} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh Data
+            </Button>
+            <Button onClick={() => navigate('/invoices')}>
+              Back to Invoices
+            </Button>
+            {invoices.length > 0 && (
+              <Button onClick={() => navigate(`/invoices/${invoices[0].id}/preview`)}>
+                View First Invoice
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -111,7 +190,7 @@ const InvoicePreview = () => {
                 Invoice {invoice.invoiceNumber}
               </h1>
               <p className="text-sm text-gray-600">
-                {client?.name} • {new Intl.NumberFormat('en-US', {
+                {client?.name || 'Unknown Client'} • {new Intl.NumberFormat('en-US', {
                   style: 'currency',
                   currency: 'USD',
                 }).format(invoice.total)}
