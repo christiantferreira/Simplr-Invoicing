@@ -3,19 +3,66 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Download, Send, Printer, Link as LinkIcon, Edit, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useInvoice } from '@/contexts/InvoiceContext';
+import { useSupabaseInvoices } from '@/hooks/useSupabaseInvoices';
+import { useAuth } from '@/hooks/useAuth';
 import InvoicePreviewPanel from '@/components/InvoicePreviewPanel';
 import SendInvoiceModal from '@/components/SendInvoiceModal';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const InvoicePreview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { state } = useInvoice();
+  const { user } = useAuth();
+  const { invoices, clients, loading } = useSupabaseInvoices();
   const [showSendModal, setShowSendModal] = useState(false);
+  const [companySettings, setCompanySettings] = useState(null);
 
-  const invoice = state.invoices.find(inv => inv.id === id);
-  const client = invoice ? state.clients.find(c => c.id === invoice.clientId) : null;
+  // Load company settings
+  React.useEffect(() => {
+    const loadCompanySettings = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('company_info')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (error) throw error;
+        
+        if (data) {
+          setCompanySettings({
+            id: data.id,
+            name: data.company_name || '',
+            address: data.address || '',
+            phone: data.phone_number || '',
+            email: data.email || '',
+            primaryColor: data.primary_color || '#3B82F6',
+            secondaryColor: data.secondary_color || '#10B981',
+            hasGST: !!data.gst_number,
+            gstNumber: data.gst_number || '',
+          });
+        }
+      } catch (error) {
+        console.error('Error loading company settings:', error);
+      }
+    };
+
+    loadCompanySettings();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  const invoice = invoices.find(inv => inv.id === id);
+  const client = invoice ? clients.find(c => c.id === invoice.clientId) : null;
 
   if (!invoice) {
     return (
@@ -106,7 +153,7 @@ const InvoicePreview = () => {
           <InvoicePreviewPanel 
             invoice={invoice} 
             client={client}
-            companySettings={state.companySettings}
+            companySettings={companySettings}
           />
         </div>
       </div>
