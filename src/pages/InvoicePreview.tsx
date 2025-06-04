@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Download, Send, Printer, Link as LinkIcon, Edit, ArrowLeft, RefreshCw } from 'lucide-react';
@@ -9,6 +8,7 @@ import InvoicePreviewPanel from '@/components/InvoicePreviewPanel';
 import SendInvoiceModal from '@/components/SendInvoiceModal';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import jsPDF from 'jspdf';
 
 const InvoicePreview = () => {
   const { id } = useParams();
@@ -158,7 +158,113 @@ const InvoicePreview = () => {
   }
 
   const handleDownload = () => {
-    toast.success('PDF download will be implemented with a PDF library');
+    try {
+      const pdf = new jsPDF();
+      
+      // Set up the PDF document
+      pdf.setFontSize(20);
+      pdf.text('INVOICE', 20, 30);
+      
+      // Invoice number
+      pdf.setFontSize(12);
+      pdf.text(`Invoice #: ${invoice.invoiceNumber}`, 20, 45);
+      
+      // Company info
+      if (companySettings) {
+        pdf.setFontSize(14);
+        pdf.text(companySettings.name, 120, 30);
+        if (companySettings.address) {
+          const addressLines = companySettings.address.split('\n');
+          addressLines.forEach((line, index) => {
+            pdf.setFontSize(10);
+            pdf.text(line, 120, 40 + (index * 5));
+          });
+        }
+        if (companySettings.email) {
+          pdf.setFontSize(10);
+          pdf.text(companySettings.email, 120, 55);
+        }
+        if (companySettings.phone) {
+          pdf.setFontSize(10);
+          pdf.text(companySettings.phone, 120, 60);
+        }
+      }
+      
+      // Client info
+      if (client) {
+        pdf.setFontSize(12);
+        pdf.text('Bill To:', 20, 70);
+        pdf.setFontSize(10);
+        pdf.text(client.name, 20, 80);
+        if (client.company) {
+          pdf.text(client.company, 20, 85);
+        }
+        if (client.email) {
+          pdf.text(client.email, 20, 90);
+        }
+        if (client.address) {
+          const clientAddressLines = client.address.split('\n');
+          clientAddressLines.forEach((line, index) => {
+            pdf.text(line, 20, 95 + (index * 5));
+          });
+        }
+      }
+      
+      // Invoice details
+      pdf.setFontSize(10);
+      pdf.text(`Issue Date: ${invoice.issueDate || '-'}`, 120, 80);
+      pdf.text(`Due Date: ${invoice.dueDate || '-'}`, 120, 85);
+      
+      // Items table header
+      const startY = 120;
+      pdf.setFontSize(10);
+      pdf.text('Description', 20, startY);
+      pdf.text('Qty', 120, startY);
+      pdf.text('Price', 140, startY);
+      pdf.text('Total', 170, startY);
+      
+      // Draw line under header
+      pdf.line(20, startY + 2, 190, startY + 2);
+      
+      // Items
+      let currentY = startY + 10;
+      if (invoice.items && invoice.items.length > 0) {
+        invoice.items.forEach((item) => {
+          pdf.text(item.description || '', 20, currentY);
+          pdf.text(item.quantity.toString(), 120, currentY);
+          pdf.text(`$${item.unitPrice.toFixed(2)}`, 140, currentY);
+          pdf.text(`$${item.total.toFixed(2)}`, 170, currentY);
+          currentY += 8;
+        });
+      }
+      
+      // Totals
+      const totalsY = Math.max(currentY + 20, 200);
+      pdf.text(`Subtotal: $${(invoice.subtotal || 0).toFixed(2)}`, 140, totalsY);
+      if ((invoice.discount || 0) > 0) {
+        pdf.text(`Discount: -$${(invoice.discount || 0).toFixed(2)}`, 140, totalsY + 8);
+      }
+      if ((invoice.tax || 0) > 0) {
+        pdf.text(`Tax: $${(invoice.tax || 0).toFixed(2)}`, 140, totalsY + 16);
+      }
+      pdf.setFontSize(12);
+      pdf.text(`Total: $${(invoice.total || 0).toFixed(2)}`, 140, totalsY + 24);
+      
+      // Notes
+      if (invoice.notes) {
+        pdf.setFontSize(10);
+        pdf.text('Notes:', 20, totalsY + 40);
+        const noteLines = pdf.splitTextToSize(invoice.notes, 170);
+        pdf.text(noteLines, 20, totalsY + 48);
+      }
+      
+      // Save the PDF
+      pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
+    }
   };
 
   const handlePrint = () => {
