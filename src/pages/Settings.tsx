@@ -50,19 +50,28 @@ const Settings = () => {
   const [taxConfigurations, setTaxConfigurations] = useState<TaxConfiguration[]>([]);
 
   useEffect(() => {
+    console.log('Settings component mounted, user:', !!user);
     loadCompanySettings();
     loadTaxConfigurations();
   }, [user]);
 
   const loadCompanySettings = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user found, skipping company settings load');
+      return;
+    }
+
+    console.log('Loading company settings for user:', user.id);
 
     try {
       const { data, error } = await supabase
         .from('company_info')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      console.log('Company settings query result:', { data, error });
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error loading company settings:', error);
@@ -70,22 +79,26 @@ const Settings = () => {
         return;
       }
 
-      if (data) {
+      if (data && data.length > 0) {
+        const companyData = data[0];
+        console.log('Found company data:', companyData);
         setFormData({
-          id: data.id,
-          company_name: data.company_name || '',
-          address: data.address || '',
-          phone_number: data.phone_number || '',
-          email: data.email || '',
-          gst_number: data.gst_number || '',
-          primary_color: data.primary_color || '#3B82F6',
-          secondary_color: data.secondary_color || '#6B7280',
-          invoice_prefix: data.invoice_prefix || 'INV-',
-          invoice_start_number: data.invoice_start_number || 1,
+          id: companyData.id,
+          company_name: companyData.company_name || '',
+          address: companyData.address || '',
+          phone_number: companyData.phone_number || '',
+          email: companyData.email || '',
+          gst_number: companyData.gst_number || '',
+          primary_color: companyData.primary_color || '#3B82F6',
+          secondary_color: companyData.secondary_color || '#6B7280',
+          invoice_prefix: companyData.invoice_prefix || 'INV-',
+          invoice_start_number: companyData.invoice_start_number || 1,
         });
+      } else {
+        console.log('No company data found, using defaults');
       }
     } catch (error) {
-      console.error('Error loading company settings:', error);
+      console.error('Exception loading company settings:', error);
       toast.error('Error loading company settings');
     } finally {
       setLoading(false);
@@ -95,6 +108,8 @@ const Settings = () => {
   const loadTaxConfigurations = async () => {
     if (!user) return;
 
+    console.log('Loading tax configurations for user:', user.id);
+
     try {
       const { data, error } = await supabase
         .from('tax_configurations')
@@ -102,13 +117,15 @@ const Settings = () => {
         .eq('user_id', user.id)
         .order('province_code', { ascending: true });
 
+      console.log('Tax configurations query result:', { data, error });
+
       if (error) {
         console.error('Error loading tax configurations:', error);
         return;
       }
 
       if (data && data.length === 0) {
-        // Insert default configurations if none exist
+        console.log('No tax configurations found, initializing defaults');
         await initializeDefaultTaxConfigurations();
         return;
       }
@@ -121,6 +138,8 @@ const Settings = () => {
 
   const initializeDefaultTaxConfigurations = async () => {
     if (!user) return;
+
+    console.log('Initializing default tax configurations');
 
     const defaultTaxes = [
       { province_code: 'BC', tax_name: 'GST', tax_rate: 5.000 },
@@ -148,6 +167,8 @@ const Settings = () => {
         )
         .select();
 
+      console.log('Default tax configurations insert result:', { data, error });
+
       if (error) {
         console.error('Error initializing tax configurations:', error);
         return;
@@ -161,34 +182,55 @@ const Settings = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      console.log('No user found, cannot save settings');
+      toast.error('User not authenticated');
+      return;
+    }
+
+    console.log('Starting save process');
+    console.log('Form data to save:', formData);
+    console.log('User ID:', user.id);
 
     setSaving(true);
     try {
-      const { error } = await supabase
+      const saveData = {
+        user_id: user.id,
+        company_name: formData.company_name,
+        address: formData.address,
+        phone_number: formData.phone_number,
+        email: formData.email,
+        gst_number: formData.gst_number,
+        primary_color: formData.primary_color,
+        secondary_color: formData.secondary_color,
+        invoice_prefix: formData.invoice_prefix,
+        invoice_start_number: formData.invoice_start_number,
+      };
+
+      console.log('Data being saved to database:', saveData);
+
+      const { data, error } = await supabase
         .from('company_info')
-        .upsert({
-          user_id: user.id,
-          company_name: formData.company_name,
-          address: formData.address,
-          phone_number: formData.phone_number,
-          email: formData.email,
-          gst_number: formData.gst_number,
-          primary_color: formData.primary_color,
-          secondary_color: formData.secondary_color,
-          invoice_prefix: formData.invoice_prefix,
-          invoice_start_number: formData.invoice_start_number,
-        });
+        .upsert(saveData, {
+          onConflict: 'user_id'
+        })
+        .select();
+
+      console.log('Save result:', { data, error });
 
       if (error) {
         console.error('Error saving settings:', error);
-        toast.error('Error saving settings');
+        toast.error(`Error saving settings: ${error.message}`);
         return;
       }
 
+      console.log('Settings saved successfully:', data);
       toast.success('Settings updated successfully');
+      
+      // Reload the data to ensure UI is up to date
+      await loadCompanySettings();
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('Exception saving settings:', error);
       toast.error('Error saving settings');
     } finally {
       setSaving(false);
@@ -196,15 +238,20 @@ const Settings = () => {
   };
 
   const handleChange = (field: keyof CompanySettings, value: string | number) => {
+    console.log(`Updating field ${field} to:`, value);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleTaxToggle = async (taxId: string, enabled: boolean) => {
+    console.log(`Toggling tax ${taxId} to:`, enabled);
+    
     try {
       const { error } = await supabase
         .from('tax_configurations')
         .update({ is_enabled: enabled })
         .eq('id', taxId);
+
+      console.log('Tax toggle result:', { error });
 
       if (error) {
         console.error('Error updating tax configuration:', error);
