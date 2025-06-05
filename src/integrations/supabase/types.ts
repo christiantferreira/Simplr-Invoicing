@@ -56,6 +56,8 @@ export type Database = {
           email: string | null
           gst_number: string | null
           id: string
+          invoice_prefix: string | null
+          invoice_start_number: number | null
           phone_number: string | null
           primary_color: string | null
           secondary_color: string | null
@@ -68,6 +70,8 @@ export type Database = {
           email?: string | null
           gst_number?: string | null
           id?: string
+          invoice_prefix?: string | null
+          invoice_start_number?: number | null
           phone_number?: string | null
           primary_color?: string | null
           secondary_color?: string | null
@@ -80,6 +84,8 @@ export type Database = {
           email?: string | null
           gst_number?: string | null
           id?: string
+          invoice_prefix?: string | null
+          invoice_start_number?: number | null
           phone_number?: string | null
           primary_color?: string | null
           secondary_color?: string | null
@@ -94,6 +100,9 @@ export type Database = {
           id: string
           invoice_id: string
           quantity: number | null
+          tax_amount: number | null
+          tax_rate: number | null
+          tax_type: string | null
           total: number | null
           unit_price: number | null
         }
@@ -103,6 +112,9 @@ export type Database = {
           id?: string
           invoice_id: string
           quantity?: number | null
+          tax_amount?: number | null
+          tax_rate?: number | null
+          tax_type?: string | null
           total?: number | null
           unit_price?: number | null
         }
@@ -112,6 +124,9 @@ export type Database = {
           id?: string
           invoice_id?: string
           quantity?: number | null
+          tax_amount?: number | null
+          tax_rate?: number | null
+          tax_type?: string | null
           total?: number | null
           unit_price?: number | null
         }
@@ -138,6 +153,8 @@ export type Database = {
           status: string | null
           subtotal: number | null
           tax: number | null
+          tax_rate: number | null
+          tax_type: string | null
           total: number | null
           user_id: string | null
         }
@@ -153,6 +170,8 @@ export type Database = {
           status?: string | null
           subtotal?: number | null
           tax?: number | null
+          tax_rate?: number | null
+          tax_type?: string | null
           total?: number | null
           user_id?: string | null
         }
@@ -168,6 +187,8 @@ export type Database = {
           status?: string | null
           subtotal?: number | null
           tax?: number | null
+          tax_rate?: number | null
+          tax_type?: string | null
           total?: number | null
           user_id?: string | null
         }
@@ -237,6 +258,39 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      tax_configurations: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean | null
+          province_code: string
+          tax_name: string
+          tax_rate: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          province_code: string
+          tax_name: string
+          tax_rate: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          province_code?: string
+          tax_name?: string
+          tax_rate?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

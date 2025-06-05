@@ -11,6 +11,54 @@ export const useSupabaseInvoices = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Get next invoice number based on company settings
+  const getNextInvoiceNumber = async (): Promise<string> => {
+    if (!user) return 'INV-001';
+
+    try {
+      // Get company settings for prefix and starting number
+      const { data: companyData } = await supabase
+        .from('company_info')
+        .select('invoice_prefix, invoice_start_number')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const prefix = companyData?.invoice_prefix || 'INV-';
+      const startNumber = companyData?.invoice_start_number || 1;
+
+      // Get the highest invoice number from existing invoices
+      const { data: invoicesData } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      let nextNumber = startNumber;
+
+      if (invoicesData && invoicesData.length > 0) {
+        // Find the highest number from existing invoices with the same prefix
+        const numbers = invoicesData
+          .map(inv => inv.invoice_number)
+          .filter(num => num && num.startsWith(prefix))
+          .map(num => {
+            const numberPart = num?.replace(prefix, '');
+            return parseInt(numberPart || '0', 10);
+          })
+          .filter(num => !isNaN(num));
+
+        if (numbers.length > 0) {
+          const maxNumber = Math.max(...numbers);
+          nextNumber = Math.max(maxNumber + 1, startNumber);
+        }
+      }
+
+      return `${prefix}${String(nextNumber).padStart(3, '0')}`;
+    } catch (error) {
+      console.error('Error generating invoice number:', error);
+      return 'INV-001';
+    }
+  };
+
   // Load clients from Supabase
   const loadClients = async () => {
     if (!user) return;
@@ -168,13 +216,16 @@ export const useSupabaseInvoices = () => {
         .limit(1);
       
       if (!existingInvoices || existingInvoices.length === 0) {
+        // Get next invoice number
+        const invoiceNumber = await getNextInvoiceNumber();
+        
         // Create sample invoice
         const { data: invoiceData, error: invoiceError } = await supabase
           .from('invoices')
           .insert({
             user_id: user.id,
             client_id: clientId,
-            invoice_number: 'INV-001',
+            invoice_number: invoiceNumber,
             status: 'sent',
             issue_date: new Date().toISOString().split('T')[0],
             due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -242,6 +293,7 @@ export const useSupabaseInvoices = () => {
     invoices,
     loading,
     error,
+    getNextInvoiceNumber,
     refetch: () => {
       if (user) {
         setLoading(true);

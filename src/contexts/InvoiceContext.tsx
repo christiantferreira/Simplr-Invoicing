@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Client, Invoice, CompanySettings, DashboardStats } from '@/types';
 import { format, addDays, isAfter, startOfMonth, endOfMonth } from 'date-fns';
+import { useSupabaseInvoices } from '@/hooks/useSupabaseInvoices';
 
 interface InvoiceState {
   clients: Client[];
@@ -83,6 +84,7 @@ interface InvoiceContextType {
   updateCompanySettings: (settings: CompanySettings) => void;
   getDashboardStats: () => DashboardStats;
   getNextInvoiceNumber: () => string;
+  calculateInvoiceTotals: (items: any[], discount: number, taxRate: number) => { subtotal: number; taxAmount: number; total: number };
 }
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
@@ -97,119 +99,33 @@ export const useInvoice = () => {
 
 export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(invoiceReducer, initialState);
+  const { clients, invoices, loading, getNextInvoiceNumber } = useSupabaseInvoices();
+
+  // Update state when Supabase data changes
+  useEffect(() => {
+    dispatch({ type: 'SET_CLIENTS', payload: clients });
+  }, [clients]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    dispatch({ type: 'SET_INVOICES', payload: invoices });
+  }, [invoices]);
 
-  const loadData = () => {
-    try {
-      const clients = JSON.parse(localStorage.getItem('simplr_clients') || '[]');
-      const invoices = JSON.parse(localStorage.getItem('simplr_invoices') || '[]');
-      const companySettings = JSON.parse(localStorage.getItem('simplr_company_settings') || 'null');
+  useEffect(() => {
+    dispatch({ type: 'SET_LOADING', payload: loading });
+  }, [loading]);
 
-      dispatch({ type: 'SET_CLIENTS', payload: clients });
-      dispatch({ type: 'SET_INVOICES', payload: invoices });
-      dispatch({ type: 'SET_COMPANY_SETTINGS', payload: companySettings });
-      
-      // Initialize with sample data if empty
-      if (clients.length === 0 && invoices.length === 0) {
-        initializeSampleData();
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
-  };
+  const calculateInvoiceTotals = (items: any[], discount: number = 0, taxRate: number = 0) => {
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const discountAmount = subtotal * (discount / 100);
+    const taxableAmount = subtotal - discountAmount;
+    const taxAmount = taxableAmount * (taxRate / 100);
+    const total = taxableAmount + taxAmount;
 
-  const initializeSampleData = () => {
-    const sampleClients: Client[] = [
-      {
-        id: '1',
-        name: 'Acme Corporation',
-        email: 'john@acme.com',
-        phone: '+1 (555) 987-6543',
-        company: 'Acme Corp',
-        address: '123 Business Ave, New York, NY 10001',
-        createdAt: format(new Date(), 'yyyy-MM-dd'),
-      },
-      {
-        id: '2',
-        name: 'Sarah Johnson',
-        email: 'sarah@startup.io',
-        phone: '+1 (555) 456-7890',
-        company: 'Startup Inc',
-        address: '456 Tech Street, San Francisco, CA 94107',
-        createdAt: format(new Date(), 'yyyy-MM-dd'),
-      },
-    ];
-
-    const sampleInvoices: Invoice[] = [
-      {
-        id: '1',
-        invoiceNumber: 'INV-001',
-        clientId: '1',
-        status: 'paid',
-        issueDate: '2024-05-01',
-        dueDate: '2024-05-31',
-        items: [
-          {
-            id: '1',
-            description: 'Web Design Services',
-            quantity: 1,
-            unitPrice: 2500,
-            total: 2500,
-          },
-        ],
-        subtotal: 2500,
-        discount: 0,
-        tax: 0,
-        total: 2500,
-        templateId: 'classic',
-        createdAt: '2024-05-01',
-        updatedAt: '2024-05-01',
-        paidAt: '2024-05-25',
-      },
-      {
-        id: '2',
-        invoiceNumber: 'INV-002',
-        clientId: '2',
-        status: 'sent',
-        issueDate: '2024-05-15',
-        dueDate: '2024-06-14',
-        items: [
-          {
-            id: '1',
-            description: 'Logo Design',
-            quantity: 1,
-            unitPrice: 800,
-            total: 800,
-          },
-          {
-            id: '2',
-            description: 'Brand Guidelines',
-            quantity: 1,
-            unitPrice: 1000,
-            total: 1000,
-          },
-        ],
-        subtotal: 1800,
-        discount: 0,
-        tax: 0,
-        total: 1800,
-        templateId: 'modern',
-        createdAt: '2024-05-15',
-        updatedAt: '2024-05-15',
-        sentAt: '2024-05-15',
-      },
-    ];
-
-    dispatch({ type: 'SET_CLIENTS', payload: sampleClients });
-    dispatch({ type: 'SET_INVOICES', payload: sampleInvoices });
-    
-    localStorage.setItem('simplr_clients', JSON.stringify(sampleClients));
-    localStorage.setItem('simplr_invoices', JSON.stringify(sampleInvoices));
+    return {
+      subtotal,
+      taxAmount,
+      total
+    };
   };
 
   const addClient = (clientData: Omit<Client, 'id' | 'createdAt'>) => {
@@ -219,29 +135,14 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       createdAt: format(new Date(), 'yyyy-MM-dd'),
     };
     dispatch({ type: 'ADD_CLIENT', payload: newClient });
-    const updatedClients = [...state.clients, newClient];
-    localStorage.setItem('simplr_clients', JSON.stringify(updatedClients));
   };
 
   const updateClient = (client: Client) => {
     dispatch({ type: 'UPDATE_CLIENT', payload: client });
-    const updatedClients = state.clients.map(c => c.id === client.id ? client : c);
-    localStorage.setItem('simplr_clients', JSON.stringify(updatedClients));
   };
 
   const deleteClient = (id: string) => {
     dispatch({ type: 'DELETE_CLIENT', payload: id });
-    const updatedClients = state.clients.filter(c => c.id !== id);
-    localStorage.setItem('simplr_clients', JSON.stringify(updatedClients));
-  };
-
-  const getNextInvoiceNumber = () => {
-    const invoiceNumbers = state.invoices
-      .map(inv => parseInt(inv.invoiceNumber.replace('INV-', '')))
-      .filter(num => !isNaN(num));
-    
-    const maxNumber = invoiceNumbers.length > 0 ? Math.max(...invoiceNumbers) : 0;
-    return `INV-${String(maxNumber + 1).padStart(3, '0')}`;
   };
 
   const addInvoice = (invoiceData: Omit<Invoice, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt'>) => {
@@ -249,31 +150,24 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const newInvoice: Invoice = {
       ...invoiceData,
       id: Date.now().toString(),
-      invoiceNumber: getNextInvoiceNumber(),
+      invoiceNumber: getNextInvoiceNumber ? getNextInvoiceNumber() : 'INV-001',
       createdAt: now,
       updatedAt: now,
     };
     dispatch({ type: 'ADD_INVOICE', payload: newInvoice });
-    const updatedInvoices = [...state.invoices, newInvoice];
-    localStorage.setItem('simplr_invoices', JSON.stringify(updatedInvoices));
   };
 
   const updateInvoice = (invoice: Invoice) => {
     const updatedInvoice = { ...invoice, updatedAt: format(new Date(), 'yyyy-MM-dd') };
     dispatch({ type: 'UPDATE_INVOICE', payload: updatedInvoice });
-    const updatedInvoices = state.invoices.map(inv => inv.id === invoice.id ? updatedInvoice : inv);
-    localStorage.setItem('simplr_invoices', JSON.stringify(updatedInvoices));
   };
 
   const deleteInvoice = (id: string) => {
     dispatch({ type: 'DELETE_INVOICE', payload: id });
-    const updatedInvoices = state.invoices.filter(inv => inv.id !== id);
-    localStorage.setItem('simplr_invoices', JSON.stringify(updatedInvoices));
   };
 
   const updateCompanySettings = (settings: CompanySettings) => {
     dispatch({ type: 'SET_COMPANY_SETTINGS', payload: settings });
-    localStorage.setItem('simplr_company_settings', JSON.stringify(settings));
   };
 
   const getDashboardStats = (): DashboardStats => {
@@ -284,12 +178,18 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const paidInvoices = state.invoices.filter(inv => inv.status === 'paid');
     const totalRevenue = paidInvoices.reduce((sum, inv) => sum + inv.total, 0);
 
-    const pendingInvoices = state.invoices.filter(inv => inv.status === 'sent' || inv.status === 'viewed');
+    const pendingInvoices = state.invoices.filter(inv => {
+      const dueDate = new Date(inv.dueDate);
+      const today = new Date();
+      return (inv.status === 'sent' || inv.status === 'viewed') && dueDate >= today;
+    });
     const pendingAmount = pendingInvoices.reduce((sum, inv) => sum + inv.total, 0);
 
     const overdueInvoices = state.invoices.filter(inv => {
       if (inv.status === 'paid') return false;
-      return isAfter(now, new Date(inv.dueDate));
+      const dueDate = new Date(inv.dueDate);
+      const today = new Date();
+      return dueDate < today;
     });
     const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + inv.total, 0);
 
@@ -318,7 +218,8 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteInvoice,
         updateCompanySettings,
         getDashboardStats,
-        getNextInvoiceNumber,
+        getNextInvoiceNumber: getNextInvoiceNumber || (() => 'INV-001'),
+        calculateInvoiceTotals,
       }}
     >
       {children}
