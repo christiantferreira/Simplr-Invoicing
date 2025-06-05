@@ -1,73 +1,150 @@
-# Welcome to your Lovable project
+# Simplr Invoice Flow
 
-## Project info
+A professional invoicing app built with **Vite**, **React**, **TypeScript**, **shadcn-ui**, **Tailwind CSS**, and **Supabase**.  
+Originally bootstrapped using [Lovable.dev](https://lovable.dev), now fully editable via local development tools.
 
-**URL**: https://lovable.dev/projects/403203ec-4d31-436b-8d4a-855eecf7b3a8
+---
 
-## How can I edit this code?
+## 🚀 Getting Started
 
-There are several ways of editing your application.
+### 1. Clone the Repository
 
-**Use Lovable**
+```bash
+git clone https://github.com/christiantoferreira/simplr-invoice-flow.git
+cd simplr-invoice-flow
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/403203ec-4d31-436b-8d4a-855eecf7b3a8) and start prompting.
+### 2. Install Dependencies
 
-Changes made via Lovable will be committed automatically to this repo.
+```bash
+npm install
+```
 
-**Use your preferred IDE**
+### 3. Environment Variables
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Create a `.env` file in the root folder and include the following keys:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```env
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
 
-Follow these steps:
+> ⚠️ Do **not** commit your `.env` file. It's already ignored by `.gitignore`.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 4. Run the App Locally
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Then open: [http://localhost:3000](http://localhost:3000)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 💠 Available Commands
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Command              | Description                         |
+|----------------------|-------------------------------------|
+| `npm run dev`        | Start local development server      |
+| `npm run build`      | Create a production build           |
+| `npm run preview`    | Preview the production build        |
+| `npm run lint`       | Run ESLint (if configured)          |
+| `npm run typecheck`  | Run TypeScript type checking        |
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 📁 Project Structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+simplr-invoice-flow/
+├── public/                       # Static files
+├── src/
+│   ├── components/              # Reusable UI components
+│   ├── pages/                   # App pages/routes
+│   ├── integrations/supabase/   # Supabase config, types & hooks
+│   ├── lib/                     # Utility functions
+│   └── App.tsx                  # Root component
+├── .env                         # Local environment variables
+├── index.html                   # App shell
+├── package.json                 # Project metadata
+└── vite.config.ts              # Vite configuration
+```
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/403203ec-4d31-436b-8d4a-855eecf7b3a8) and click on Share -> Publish.
+## 🔐 Supabase Integration
 
-## Can I connect a custom domain to my Lovable project?
+Supabase is used for:
+- Authentication
+- Realtime database
+- Storage (if configured)
 
-Yes, you can!
+Make sure the `.env` file contains the correct Supabase URL and anon key. The config is located at:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```ts
+// src/integrations/supabase/client.ts
+import { createClient } from '@supabase/supabase-js'
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+)
+
+export default supabase
+```
+
+---
+
+## 🔧 Recommended VS Code Extensions
+
+- Prettier – Code formatter  
+- ESLint  
+- GitLens  
+- ES7+ React/Redux Snippets  
+- React DevTools  
+- Supabase Auth Helpers (if applicable)
+
+---
+
+## 🌐 Git Workflow
+
+```bash
+# Get latest main
+git pull origin main
+
+# Create a feature branch
+git checkout -b feature/your-feature-name
+
+# Commit your changes
+git add .
+git commit -m "feat: add feature"
+
+# Push to remote
+git push origin feature/your-feature-name
+```
+
+---
+
+## ⚠️ Notes
+
+- Always prefix frontend env variables with `VITE_`
+- Use `console.log(import.meta.env)` to debug env vars
+- React HMR is enabled by default via Vite
+- If HMR breaks, run `npm run dev --force`
+
+---
+
+## 📦 Deployment
+
+This project can be deployed easily via platforms like:
+- [Vercel](https://vercel.com/)
+- [Netlify](https://www.netlify.com/)
+- [Render](https://render.com/)
+
+Or continue using [Lovable.dev](https://lovable.dev) for one-click publish.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
