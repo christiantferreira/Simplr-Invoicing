@@ -78,12 +78,12 @@ interface InvoiceContextType {
   addClient: (client: Omit<Client, 'id' | 'createdAt'>) => void;
   updateClient: (client: Client) => void;
   deleteClient: (id: string) => void;
-  addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt'>) => void;
+  addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateInvoice: (invoice: Invoice) => void;
   deleteInvoice: (id: string) => void;
   updateCompanySettings: (settings: CompanySettings) => void;
   getDashboardStats: () => DashboardStats;
-  getNextInvoiceNumber: () => string;
+  getNextInvoiceNumber: () => Promise<string>;
   calculateInvoiceTotals: (items: any[], discount: number, taxRate: number) => { subtotal: number; taxAmount: number; total: number };
 }
 
@@ -145,12 +145,13 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     dispatch({ type: 'DELETE_CLIENT', payload: id });
   };
 
-  const addInvoice = (invoiceData: Omit<Invoice, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt'>) => {
+  const addInvoice = async (invoiceData: Omit<Invoice, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt'>) => {
     const now = format(new Date(), 'yyyy-MM-dd');
+    const invoiceNumber = await getNextInvoiceNumber();
     const newInvoice: Invoice = {
       ...invoiceData,
       id: Date.now().toString(),
-      invoiceNumber: getNextInvoiceNumber ? getNextInvoiceNumber() : 'INV-001',
+      invoiceNumber,
       createdAt: now,
       updatedAt: now,
     };
@@ -218,7 +219,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteInvoice,
         updateCompanySettings,
         getDashboardStats,
-        getNextInvoiceNumber: getNextInvoiceNumber || (() => 'INV-001'),
+        getNextInvoiceNumber,
         calculateInvoiceTotals,
       }}
     >

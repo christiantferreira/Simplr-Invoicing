@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, Send, Eye, Plus, Trash2 } from 'lucide-react';
@@ -9,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useInvoice } from '@/contexts/InvoiceContext';
+import { useTaxConfigurations } from '@/hooks/useTaxConfigurations';
 import { Invoice, InvoiceItem, Client, TemplateId } from '@/types';
 import InvoicePreviewPanel from '@/components/InvoicePreviewPanel';
 import { format, addDays } from 'date-fns';
@@ -18,9 +18,11 @@ const InvoiceEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { state, addInvoice, updateInvoice, getNextInvoiceNumber } = useInvoice();
+  const { getEnabledTaxOptions } = useTaxConfigurations();
   
   const isEditing = !!id;
   const existingInvoice = isEditing ? state.invoices.find(inv => inv.id === id) : null;
+  const [nextInvoiceNumber, setNextInvoiceNumber] = useState<string>('');
 
   const [invoiceData, setInvoiceData] = useState<Partial<Invoice>>({
     clientId: '',
@@ -45,29 +47,36 @@ const InvoiceEditor = () => {
   });
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedTaxOption, setSelectedTaxOption] = useState<{ rate: number; name: string } | null>(null);
 
   useEffect(() => {
     if (existingInvoice) {
       setInvoiceData(existingInvoice);
       const client = state.clients.find(c => c.id === existingInvoice.clientId);
       setSelectedClient(client || null);
+      setNextInvoiceNumber(existingInvoice.invoiceNumber);
+    } else {
+      // Load next invoice number for new invoices
+      getNextInvoiceNumber().then(setNextInvoiceNumber);
     }
-  }, [existingInvoice, state.clients]);
+  }, [existingInvoice, state.clients, getNextInvoiceNumber]);
 
   useEffect(() => {
     calculateTotals();
-  }, [invoiceData.items, invoiceData.discount, invoiceData.tax]);
+  }, [invoiceData.items, invoiceData.discount, selectedTaxOption]);
 
   const calculateTotals = () => {
     const items = invoiceData.items || [];
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const discount = invoiceData.discount || 0;
-    const tax = invoiceData.tax || 0;
-    const total = subtotal - discount + tax;
+    const taxRate = selectedTaxOption?.rate || 0;
+    const taxAmount = (subtotal - discount) * (taxRate / 100);
+    const total = subtotal - discount + taxAmount;
 
     setInvoiceData(prev => ({
       ...prev,
       subtotal,
+      tax: taxAmount,
       total,
     }));
   };
@@ -103,7 +112,7 @@ const InvoiceEditor = () => {
     setInvoiceData(prev => ({ ...prev, items }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!invoiceData.clientId) {
       toast.error('Please select a client');
       return;
@@ -129,18 +138,22 @@ const InvoiceEditor = () => {
       notes: invoiceData.notes,
     };
 
-    if (isEditing && existingInvoice) {
-      updateInvoice({ ...existingInvoice, ...invoiceToSave });
-      toast.success('Invoice updated successfully');
-    } else {
-      addInvoice(invoiceToSave);
-      toast.success('Invoice created successfully');
+    try {
+      if (isEditing && existingInvoice) {
+        updateInvoice({ ...existingInvoice, ...invoiceToSave });
+        toast.success('Invoice updated successfully');
+      } else {
+        await addInvoice(invoiceToSave);
+        toast.success('Invoice created successfully');
+      }
+      navigate('/invoices');
+    } catch (error) {
+      toast.error('Failed to save invoice');
+      console.error('Error saving invoice:', error);
     }
-
-    navigate('/invoices');
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!invoiceData.clientId) {
       toast.error('Please select a client first');
       return;
@@ -152,25 +165,30 @@ const InvoiceEditor = () => {
       sentAt: format(new Date(), 'yyyy-MM-dd'),
     };
 
-    if (isEditing && existingInvoice) {
-      updateInvoice({ ...existingInvoice, ...invoiceToSend });
-    } else {
-      addInvoice({
-        ...invoiceToSend,
-        clientId: invoiceData.clientId!,
-        issueDate: invoiceData.issueDate!,
-        dueDate: invoiceData.dueDate!,
-        items: invoiceData.items!,
-        subtotal: invoiceData.subtotal!,
-        discount: invoiceData.discount!,
-        tax: invoiceData.tax!,
-        total: invoiceData.total!,
-        templateId: invoiceData.templateId!,
-      });
-    }
+    try {
+      if (isEditing && existingInvoice) {
+        updateInvoice({ ...existingInvoice, ...invoiceToSend });
+      } else {
+        await addInvoice({
+          ...invoiceToSend,
+          clientId: invoiceData.clientId!,
+          issueDate: invoiceData.issueDate!,
+          dueDate: invoiceData.dueDate!,
+          items: invoiceData.items!,
+          subtotal: invoiceData.subtotal!,
+          discount: invoiceData.discount!,
+          tax: invoiceData.tax!,
+          total: invoiceData.total!,
+          templateId: invoiceData.templateId!,
+        });
+      }
 
-    toast.success(`Invoice sent to ${selectedClient?.email}`);
-    navigate('/invoices');
+      toast.success(`Invoice sent to ${selectedClient?.email}`);
+      navigate('/invoices');
+    } catch (error) {
+      toast.error('Failed to send invoice');
+      console.error('Error sending invoice:', error);
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -179,6 +197,8 @@ const InvoiceEditor = () => {
       currency: 'USD',
     }).format(amount);
   };
+
+  const enabledTaxOptions = getEnabledTaxOptions();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -238,7 +258,7 @@ const InvoiceEditor = () => {
                     <Label htmlFor="invoiceNumber">Invoice Number</Label>
                     <Input
                       id="invoiceNumber"
-                      value={existingInvoice?.invoiceNumber || getNextInvoiceNumber()}
+                      value={nextInvoiceNumber}
                       disabled
                       className="bg-gray-50"
                     />
@@ -362,15 +382,38 @@ const InvoiceEditor = () => {
                     </div>
                     <div>
                       <Label htmlFor="tax">Tax</Label>
-                      <Input
-                        id="tax"
-                        type="number"
-                        placeholder="0.00"
-                        value={invoiceData.tax || ''}
-                        onChange={(e) => setInvoiceData(prev => ({ ...prev, tax: parseFloat(e.target.value) || 0 }))}
-                      />
+                      <Select
+                        value={selectedTaxOption ? `${selectedTaxOption.name}-${selectedTaxOption.rate}` : ''}
+                        onValueChange={(value) => {
+                          if (value) {
+                            const option = enabledTaxOptions.find(opt => opt.value === value);
+                            setSelectedTaxOption(option ? { rate: option.rate, name: option.name } : null);
+                          } else {
+                            setSelectedTaxOption(null);
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select tax type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">No Tax</SelectItem>
+                          {enabledTaxOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
+
+                  {selectedTaxOption && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Tax ({selectedTaxOption.rate}%):</span>
+                      <span className="font-medium">{formatCurrency(invoiceData.tax || 0)}</span>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center text-lg font-semibold pt-3 border-t">
                     <span>Total:</span>
