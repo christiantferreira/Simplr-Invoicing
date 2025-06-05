@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, Send, Eye, Plus, Trash2 } from 'lucide-react';
@@ -383,13 +384,13 @@ const InvoiceEditor = () => {
                     <div>
                       <Label htmlFor="tax">Tax</Label>
                       <Select
-                        value={selectedTaxOption ? `${selectedTaxOption.name}-${selectedTaxOption.rate}` : ''}
+                        value={selectedTaxOption ? `${selectedTaxOption.name}-${selectedTaxOption.rate}` : 'no-tax'}
                         onValueChange={(value) => {
-                          if (value) {
+                          if (value === 'no-tax') {
+                            setSelectedTaxOption(null);
+                          } else {
                             const option = enabledTaxOptions.find(opt => opt.value === value);
                             setSelectedTaxOption(option ? { rate: option.rate, name: option.name } : null);
-                          } else {
-                            setSelectedTaxOption(null);
                           }
                         }}
                       >
@@ -397,7 +398,7 @@ const InvoiceEditor = () => {
                           <SelectValue placeholder="Select tax type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No Tax</SelectItem>
+                          <SelectItem value="no-tax">No Tax</SelectItem>
                           {enabledTaxOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
