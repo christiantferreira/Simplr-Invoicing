@@ -39,7 +39,8 @@ const AppContent = () => {
           .from('company_info')
           .select('id')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .order('created_at', { ascending: false })
+          .limit(1);
         
         console.log('Company info result:', { data, error });
         
@@ -47,7 +48,7 @@ const AppContent = () => {
           console.error('Error fetching company info:', error);
           setHasCompletedSetup(false);
         } else {
-          setHasCompletedSetup(!!data);
+          setHasCompletedSetup(data && data.length > 0);
         }
       } catch (error) {
         console.error('Exception checking setup status:', error);
