@@ -59,19 +59,24 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
     }
   }, [editingClient, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingClient) {
-      updateClient({
-        ...editingClient,
-        ...formData,
-      });
-    } else {
-      addClient(formData);
+    try {
+      if (editingClient) {
+        updateClient({
+          ...editingClient,
+          ...formData,
+        });
+      } else {
+        await addClient(formData);
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error saving client:', error);
+      // You could add a toast notification here
     }
-    
-    onClose();
   };
 
   const handleChange = (field: string, value: string | boolean) => {

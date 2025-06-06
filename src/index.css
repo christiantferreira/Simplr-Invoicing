@@ -127,3 +127,66 @@
 .btn-simplr:hover {
   background-color: #8B5CF6;
 }
+
+/* Print Styles */
+@media print {
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Show only the invoice content */
+  #invoice-content,
+  #invoice-content * {
+    visibility: visible;
+  }
+  
+  /* Position the invoice content at the top of the page */
+  #invoice-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
+  /* Hide navigation, sidebar, and other UI elements */
+  nav,
+  .sidebar,
+  header,
+  .print-hide,
+  button,
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure proper page breaks */
+  .invoice-page {
+    page-break-inside: avoid;
+  }
+  
+  /* Remove shadows and borders for cleaner print */
+  .invoice-content {
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Optimize colors for print */
+  .bg-simplr-primary {
+    background-color: #2B0A66 !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+  
+  .bg-simplr-accent {
+    background-color: #A77DFF !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+  
+  /* Ensure text is readable */
+  .text-simplr-on-dark {
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+}

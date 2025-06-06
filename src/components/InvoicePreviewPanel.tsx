@@ -67,7 +67,7 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
   const style = templateStyles[invoice.templateId as keyof typeof templateStyles] || templateStyles.classic;
 
   return (
-    <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
+    <div id="invoice-content" className="bg-white border rounded-lg overflow-hidden shadow-sm invoice-content">
       {/* Header */}
       <div className={`${style.headerBg} ${style.headerText} p-6`}>
         <div className="flex justify-between items-start">
@@ -78,19 +78,34 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
             </p>
           </div>
           <div className="text-right">
-            <h2 className="text-xl font-semibold">{companySettings.name}</h2>
-            {companySettings.address && (
+            <h2 className="text-xl font-semibold">
+              {companySettings.name === 'Company Name Not Set' ? (
+                <span className="text-gray-400 italic">Company Name Not Set</span>
+              ) : (
+                companySettings.name
+              )}
+            </h2>
+            {companySettings.address && companySettings.address !== 'Company Address Not Set' && (
               <div className="mt-2 text-sm opacity-90">
                 {companySettings.address.split('\n').map((line, index) => (
                   <div key={index}>{line}</div>
                 ))}
               </div>
             )}
-            {companySettings.phone && (
+            {companySettings.address === 'Company Address Not Set' && (
+              <div className="mt-2 text-sm text-gray-400 italic opacity-90">Company Address Not Set</div>
+            )}
+            {companySettings.phone && companySettings.phone !== 'Phone Number Not Set' && (
               <div className="text-sm opacity-90 mt-1">{companySettings.phone}</div>
             )}
-            {companySettings.email && (
+            {companySettings.phone === 'Phone Number Not Set' && (
+              <div className="text-sm text-gray-400 italic opacity-90 mt-1">Phone Number Not Set</div>
+            )}
+            {companySettings.email && companySettings.email !== 'Email Not Set' && (
               <div className="text-sm opacity-90">{companySettings.email}</div>
+            )}
+            {companySettings.email === 'Email Not Set' && (
+              <div className="text-sm text-gray-400 italic opacity-90">Email Not Set</div>
             )}
             {companySettings.hasGST && companySettings.gstNumber && (
               <div className="text-sm opacity-90 mt-1">GST: {companySettings.gstNumber}</div>

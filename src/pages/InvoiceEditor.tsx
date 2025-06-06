@@ -1,17 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, Send, Eye, Plus, Trash2 } from 'lucide-react';
+import { Save, Send, Eye, Plus, Trash2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useInvoice } from '@/contexts/InvoiceContext';
 import { useTaxConfigurations } from '@/hooks/useTaxConfigurations';
 import { Invoice, InvoiceItem, Client, TemplateId } from '@/types';
 import InvoicePreviewPanel from '@/components/InvoicePreviewPanel';
+import AddClientModal from '@/components/AddClientModal';
 import { format, addDays } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -49,6 +51,7 @@ const InvoiceEditor = () => {
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedTaxOption, setSelectedTaxOption] = useState<{ rate: number; name: string } | null>(null);
+  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
 
   useEffect(() => {
     if (existingInvoice) {
@@ -113,7 +116,7 @@ const InvoiceEditor = () => {
     setInvoiceData(prev => ({ ...prev, items }));
   };
 
-  const handleSave = async () => {
+  const handleSaveAs = async (status: 'draft' | 'ready') => {
     if (!invoiceData.clientId) {
       toast.error('Please select a client');
       return;
@@ -127,7 +130,7 @@ const InvoiceEditor = () => {
     const invoiceToSave = {
       ...invoiceData,
       clientId: invoiceData.clientId!,
-      status: invoiceData.status!,
+      status: status,
       issueDate: invoiceData.issueDate!,
       dueDate: invoiceData.dueDate!,
       items: invoiceData.items!,
@@ -141,11 +144,11 @@ const InvoiceEditor = () => {
 
     try {
       if (isEditing && existingInvoice) {
-        updateInvoice({ ...existingInvoice, ...invoiceToSave });
-        toast.success('Invoice updated successfully');
+        await updateInvoice({ ...existingInvoice, ...invoiceToSave });
+        toast.success(`Invoice updated as ${status === 'draft' ? 'Draft' : 'Ready'}`);
       } else {
         await addInvoice(invoiceToSave);
-        toast.success('Invoice created successfully');
+        toast.success(`Invoice saved as ${status === 'draft' ? 'Draft' : 'Ready'}`);
       }
       navigate('/invoices');
     } catch (error) {
@@ -168,7 +171,7 @@ const InvoiceEditor = () => {
 
     try {
       if (isEditing && existingInvoice) {
-        updateInvoice({ ...existingInvoice, ...invoiceToSend });
+        await updateInvoice({ ...existingInvoice, ...invoiceToSend });
       } else {
         await addInvoice({
           ...invoiceToSend,
@@ -190,6 +193,14 @@ const InvoiceEditor = () => {
       toast.error('Failed to send invoice');
       console.error('Error sending invoice:', error);
     }
+  };
+
+  const handleClientAdded = (newClient: Client) => {
+    // Automatically select the newly created client
+    setInvoiceData(prev => ({ ...prev, clientId: newClient.id }));
+    setSelectedClient(newClient);
+    setIsAddClientModalOpen(false);
+    toast.success('Client added successfully');
   };
 
   const formatCurrency = (amount: number) => {
@@ -215,10 +226,25 @@ const InvoiceEditor = () => {
                 <Button variant="outline" onClick={() => navigate('/invoices')}>
                   Cancel
                 </Button>
-                <Button onClick={handleSave} className="bg-blue-500 hover:bg-blue-600">
-                  <Save className="w-4 h-4 mr-2" />
-                  Save
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="bg-blue-500 hover:bg-blue-600">
+                      <Save className="w-4 h-4 mr-2" />
+                      Save As
+                      <ChevronDown className="w-4 h-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleSaveAs('draft')}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save as Draft
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSaveAs('ready')}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Save as Ready
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button onClick={handleSend} className="bg-green-500 hover:bg-green-600">
                   <Send className="w-4 h-4 mr-2" />
                   Send
@@ -238,15 +264,22 @@ const InvoiceEditor = () => {
                     <Select
                       value={invoiceData.clientId}
                       onValueChange={(value) => {
-                        setInvoiceData(prev => ({ ...prev, clientId: value }));
-                        const client = state.clients.find(c => c.id === value);
-                        setSelectedClient(client || null);
+                        if (value === 'new-client') {
+                          setIsAddClientModalOpen(true);
+                        } else {
+                          setInvoiceData(prev => ({ ...prev, clientId: value }));
+                          const client = state.clients.find(c => c.id === value);
+                          setSelectedClient(client || null);
+                        }
                       }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a client" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="new-client" className="text-blue-600 font-medium">
+                          + New Client
+                        </SelectItem>
                         {state.clients.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
                             {client.name} ({client.email})
@@ -259,7 +292,7 @@ const InvoiceEditor = () => {
                     <Label htmlFor="invoiceNumber">Invoice Number</Label>
                     <Input
                       id="invoiceNumber"
-                      value={nextInvoiceNumber}
+                      value={isEditing ? (existingInvoice?.invoiceNumber || '') : nextInvoiceNumber}
                       disabled
                       className="bg-gray-50"
                     />
@@ -365,8 +398,8 @@ const InvoiceEditor = () => {
                 </div>
 
                 <div className="mt-6 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Subtotal:</span>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-sm font-medium">Subtotal:</span>
                     <span className="font-medium">{formatCurrency(invoiceData.subtotal || 0)}</span>
                   </div>
                   
@@ -458,6 +491,12 @@ const InvoiceEditor = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Client Modal */}
+      <AddClientModal
+        isOpen={isAddClientModalOpen}
+        onClose={() => setIsAddClientModalOpen(false)}
+      />
     </div>
   );
 };

@@ -16,6 +16,11 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
           label: 'Draft',
           className: 'bg-gray-100 text-gray-800',
         };
+      case 'ready':
+        return {
+          label: 'Ready',
+          className: 'bg-orange-100 text-orange-800',
+        };
       case 'sent':
         return {
           label: 'Sent',

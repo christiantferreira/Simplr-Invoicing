@@ -40,7 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div
         className={cn(
-          'fixed top-16 left-0 h-full w-64 bg-simplr-primary border-r border-simplr-accent transform transition-transform duration-200 ease-in-out z-50',
+          'fixed top-16 left-0 h-full w-72 bg-simplr-primary border-r border-simplr-accent transform transition-transform duration-200 ease-in-out z-50',
           'lg:translate-x-0 lg:static lg:z-auto',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}

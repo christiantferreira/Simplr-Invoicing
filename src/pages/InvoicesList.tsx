@@ -33,7 +33,7 @@ const InvoicesList = () => {
     
     if (filterParam) {
       if (filterParam === 'pending' || filterParam === 'overdue' || 
-          filterParam === 'draft' || filterParam === 'sent' || 
+          filterParam === 'draft' || filterParam === 'ready' || filterParam === 'sent' || 
           filterParam === 'paid' || filterParam === 'all') {
         setActiveTab(filterParam);
       }
@@ -111,6 +111,7 @@ const InvoicesList = () => {
     return {
       all: state.invoices.length,
       draft: state.invoices.filter(inv => inv.status === 'draft').length,
+      ready: state.invoices.filter(inv => inv.status === 'ready').length,
       sent: state.invoices.filter(inv => inv.status === 'sent').length,
       paid: state.invoices.filter(inv => inv.status === 'paid').length,
       overdue: state.invoices.filter(inv => inv.status === 'overdue').length,
@@ -151,7 +152,7 @@ const InvoicesList = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="all" className="flex items-center space-x-2">
                 <span>All</span>
                 <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
@@ -162,6 +163,12 @@ const InvoicesList = () => {
                 <span>Draft</span>
                 <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
                   {tabCounts.draft}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="ready" className="flex items-center space-x-2">
+                <span>Ready</span>
+                <span className="bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full text-xs">
+                  {tabCounts.ready}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="sent" className="flex items-center space-x-2">

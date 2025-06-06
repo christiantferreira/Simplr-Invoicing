@@ -5,15 +5,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     // Check if user is already logged in
@@ -25,6 +29,37 @@ const Auth = () => {
     };
     checkUser();
   }, []);
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: credentialResponse.credential,
+      });
+
+      if (error) {
+        toast.error('Failed to sign in with Google');
+        console.error('Google sign in error:', error);
+        return;
+      }
+
+      if (data.session) {
+        toast.success('Signed in with Google successfully!');
+        window.location.href = '/';
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+      console.error('Google sign in error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error('Failed to sign in with Google');
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();

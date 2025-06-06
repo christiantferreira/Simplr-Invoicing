@@ -29,7 +29,7 @@ export interface InvoiceItem {
   total: number;
 }
 
-export type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'paid' | 'overdue';
+export type InvoiceStatus = 'draft' | 'ready' | 'sent' | 'viewed' | 'paid' | 'overdue';
 export type TemplateId = 'classic' | 'modern' | 'creative' | 'professional';
 
 export interface Invoice {

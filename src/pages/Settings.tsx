@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useInvoice } from '@/contexts/InvoiceContext';
 import { toast } from 'sonner';
 
 interface CompanySettings {
@@ -34,6 +35,7 @@ interface TaxConfiguration {
 
 const Settings = () => {
   const { user } = useAuth();
+  const { refreshCompanySettings } = useInvoice();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<CompanySettings>({
@@ -44,7 +46,7 @@ const Settings = () => {
     gst_number: '',
     primary_color: '#3B82F6',
     secondary_color: '#6B7280',
-    invoice_prefix: 'INV-',
+    invoice_prefix: '',
     invoice_start_number: 1,
   });
   const [taxConfigurations, setTaxConfigurations] = useState<TaxConfiguration[]>([]);
@@ -91,7 +93,7 @@ const Settings = () => {
           gst_number: companyData.gst_number || '',
           primary_color: companyData.primary_color || '#3B82F6',
           secondary_color: companyData.secondary_color || '#6B7280',
-          invoice_prefix: companyData.invoice_prefix || 'INV-',
+          invoice_prefix: companyData.invoice_prefix || '',
           invoice_start_number: companyData.invoice_start_number || 1,
         });
       } else {
@@ -209,12 +211,26 @@ const Settings = () => {
 
       console.log('Data being saved to database:', saveData);
 
-      const { data, error } = await supabase
-        .from('company_info')
-        .upsert(saveData, {
-          onConflict: 'user_id'
-        })
-        .select();
+      let data, error;
+      
+      if (formData.id) {
+        // Update existing record
+        const result = await supabase
+          .from('company_info')
+          .update(saveData)
+          .eq('id', formData.id)
+          .select();
+        data = result.data;
+        error = result.error;
+      } else {
+        // Insert new record
+        const result = await supabase
+          .from('company_info')
+          .insert(saveData)
+          .select();
+        data = result.data;
+        error = result.error;
+      }
 
       console.log('Save result:', { data, error });
 
@@ -229,6 +245,9 @@ const Settings = () => {
       
       // Reload the data to ensure UI is up to date
       await loadCompanySettings();
+      
+      // Refresh company settings in the InvoiceContext to update all components
+      await refreshCompanySettings();
     } catch (error) {
       console.error('Exception saving settings:', error);
       toast.error('Error saving settings');

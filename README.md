@@ -72,12 +72,36 @@ simplr-invoice-flow/
 
 ---
 
+## ✨ Key Features
+
+### Dynamic Invoice Headers
+- **Company Information Integration**: Invoice headers automatically populate with company details configured in Settings
+- **Real-time Updates**: Changes to company information in Settings are immediately reflected in all invoice previews
+- **Smart Fallbacks**: User-friendly placeholder text displays when company information is not yet configured
+- **Consistent Data Flow**: Uses centralized InvoiceContext to ensure data consistency across all components
+
+### Invoice Management
+- Create, edit, and manage professional invoices
+- Multiple invoice templates (Classic, Modern, Creative, Professional)
+- PDF generation and download
+- Email sending capabilities
+- Tax configuration support
+
+### Settings & Configuration
+- Company information management (name, address, phone, email)
+- Invoice numbering customization with prefixes
+- Tax configuration for different provinces/states
+- Brand color customization
+- GST/HST number support
+
 ## 🔐 Supabase Integration
 
 Supabase is used for:
 - Authentication
 - Realtime database
 - Storage (if configured)
+- Company settings persistence
+- Invoice and client data management
 
 Make sure the `.env` file contains the correct Supabase URL and anon key. The config is located at:
 

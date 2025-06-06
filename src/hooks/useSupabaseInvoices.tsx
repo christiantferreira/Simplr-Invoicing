@@ -13,7 +13,7 @@ export const useSupabaseInvoices = () => {
 
   // Get next invoice number based on company settings
   const getNextInvoiceNumber = async (): Promise<string> => {
-    if (!user) return 'INV-001';
+    if (!user) return '001';
 
     try {
       // Get company settings for prefix and starting number
@@ -23,7 +23,7 @@ export const useSupabaseInvoices = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const prefix = companyData?.invoice_prefix || 'INV-';
+      const prefix = companyData?.invoice_prefix || '';
       const startNumber = companyData?.invoice_start_number || 1;
 
       // Get the highest invoice number from existing invoices
@@ -39,7 +39,15 @@ export const useSupabaseInvoices = () => {
         // Find the highest number from existing invoices with the same prefix
         const numbers = invoicesData
           .map(inv => inv.invoice_number)
-          .filter(num => num && num.startsWith(prefix))
+          .filter(num => {
+            if (!num) return false;
+            // If prefix is empty, check if the invoice number is purely numeric
+            if (prefix === '') {
+              return /^\d+$/.test(num);
+            }
+            // Otherwise, check if it starts with the prefix
+            return num.startsWith(prefix);
+          })
           .map(num => {
             const numberPart = num?.replace(prefix, '');
             return parseInt(numberPart || '0', 10);
@@ -55,7 +63,7 @@ export const useSupabaseInvoices = () => {
       return `${prefix}${String(nextNumber).padStart(3, '0')}`;
     } catch (error) {
       console.error('Error generating invoice number:', error);
-      return 'INV-001';
+      return '001';
     }
   };
 
@@ -288,12 +296,102 @@ export const useSupabaseInvoices = () => {
     loadData();
   }, [user]);
 
+  // Add client to Supabase
+  const addClient = async (clientData: Omit<any, 'id' | 'createdAt'>) => {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const { data: clientResult, error: clientError } = await supabase
+        .from('clients')
+        .insert({
+          user_id: user.id,
+          contact_name: clientData.name,
+          email: clientData.email,
+          phone_number: clientData.phone || null,
+          company_name: clientData.company || null,
+          address: clientData.address || null,
+        })
+        .select()
+        .single();
+
+      if (clientError) throw clientError;
+
+      // Reload clients to update the state
+      await loadClients();
+      
+      return clientResult;
+    } catch (error) {
+      console.error('Error saving client:', error);
+      throw error;
+    }
+  };
+
+  // Update invoice in Supabase
+  const updateInvoice = async (invoiceData: any) => {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      // Update invoice in Supabase
+      const { error: invoiceError } = await supabase
+        .from('invoices')
+        .update({
+          client_id: invoiceData.clientId,
+          status: invoiceData.status,
+          issue_date: invoiceData.issueDate,
+          due_date: invoiceData.dueDate,
+          subtotal: invoiceData.subtotal,
+          discount: invoiceData.discount,
+          tax: invoiceData.tax,
+          total: invoiceData.total,
+          notes: invoiceData.notes,
+        })
+        .eq('id', invoiceData.id)
+        .eq('user_id', user.id);
+
+      if (invoiceError) throw invoiceError;
+
+      // Update invoice items
+      if (invoiceData.items && invoiceData.items.length > 0) {
+        // Delete existing items
+        await supabase
+          .from('invoice_items')
+          .delete()
+          .eq('invoice_id', invoiceData.id);
+
+        // Insert new items
+        const { error: itemsError } = await supabase
+          .from('invoice_items')
+          .insert(
+            invoiceData.items.map((item: any) => ({
+              invoice_id: invoiceData.id,
+              description: item.description,
+              quantity: item.quantity,
+              unit_price: item.unitPrice,
+              total: item.total,
+            }))
+          );
+
+        if (itemsError) throw itemsError;
+      }
+
+      // Reload invoices to update the state
+      await loadInvoices();
+      
+      return invoiceData;
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      throw error;
+    }
+  };
+
   return {
     clients,
     invoices,
     loading,
     error,
     getNextInvoiceNumber,
+    addClient,
+    updateInvoice,
     refetch: () => {
       if (user) {
         setLoading(true);
