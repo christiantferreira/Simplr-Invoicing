@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { InvoiceProvider } from '@/features/invoices';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
@@ -115,11 +116,13 @@ const AppContent = () => {
 
 const Index = () => {
   return (
-    <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <ThemeProvider defaultTheme="system" storageKey="simplr-invoicing-theme">
+      <AuthProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 
