@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -183,6 +182,15 @@ const Auth = () => {
                     Sign In
                   </Button>
                 </form>
+                <div className="mt-4">
+                  <GoogleOAuthProvider clientId={googleClientId}>
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      useOneTap
+                    />
+                  </GoogleOAuthProvider>
+                </div>
               </TabsContent>
 
               <TabsContent value="signup">
@@ -226,6 +234,15 @@ const Auth = () => {
                     Create Account
                   </Button>
                 </form>
+                <div className="mt-4">
+                  <GoogleOAuthProvider clientId={googleClientId}>
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      useOneTap
+                    />
+                  </GoogleOAuthProvider>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
