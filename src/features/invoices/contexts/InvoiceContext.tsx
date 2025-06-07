@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Client, Invoice, CompanySettings, DashboardStats } from '@/types';
 import { format, addDays, isAfter, startOfMonth, endOfMonth } from 'date-fns';
-import { useSupabaseInvoices } from '@/hooks/useSupabaseInvoices';
+import { useSupabaseInvoices } from '../hooks/useSupabaseInvoices';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 

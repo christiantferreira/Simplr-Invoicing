@@ -1,6 +1,6 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { InvoiceProvider } from '@/contexts/InvoiceContext';
+import { InvoiceProvider } from '@/features/invoices';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';

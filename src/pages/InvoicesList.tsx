@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useInvoice } from '@/contexts/InvoiceContext';
+import { useInvoice } from '@/features/invoices';
 import StatusBadge from '@/components/StatusBadge';
 import { InvoiceStatus } from '@/types';
 import { format } from 'date-fns';

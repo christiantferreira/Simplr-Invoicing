@@ -2,13 +2,9 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Download, Send, Printer, Link as LinkIcon, Edit, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSupabaseInvoices } from '@/hooks/useSupabaseInvoices';
 import { useAuth } from '@/hooks/useAuth';
-import { useInvoice } from '@/contexts/InvoiceContext';
-import InvoicePreviewPanel from '@/components/InvoicePreviewPanel';
-import SendInvoiceModal from '@/components/SendInvoiceModal';
+import { useInvoice, InvoicePreviewPanel, SendInvoiceModal, useSupabaseInvoices, generateInvoicePDF } from '@/features/invoices';
 import { toast } from 'sonner';
-import { generateInvoicePDF } from '@/utils/pdfGenerator';
 
 const InvoicePreview = () => {
   const { id } = useParams();

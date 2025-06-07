@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Users, DollarSign, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useInvoice } from '@/contexts/InvoiceContext';
+import { useInvoice } from '@/features/invoices';
 import StatusBadge from '@/components/StatusBadge';
 import { format } from 'date-fns';
 

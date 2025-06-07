@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useInvoice } from '@/contexts/InvoiceContext';
+import { useInvoice } from '@/features/invoices';
 import { toast } from 'sonner';
 
 interface CompanySettings {

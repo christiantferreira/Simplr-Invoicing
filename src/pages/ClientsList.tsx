@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useInvoice } from '@/contexts/InvoiceContext';
+import { useInvoice } from '@/features/invoices';
 import AddClientModal from '@/components/AddClientModal';
 import { Client } from '@/types';
 
