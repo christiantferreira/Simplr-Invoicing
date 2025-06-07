@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Client, Invoice, InvoiceItem } from '@/types';
 
 export const useSupabaseInvoices = () => {
@@ -91,7 +91,7 @@ export const useSupabaseInvoices = () => {
         phone: client.phone_number || '',
         company: client.company_name || '',
         address: client.address || '',
-        createdAt: new Date(client.created_at).toISOString().split('T')[0],
+        createdAt: client.created_at ? new Date(client.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       }));
       
       setClients(formattedClients);

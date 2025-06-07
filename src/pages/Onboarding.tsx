@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +9,7 @@ import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const Onboarding = () => {
   const { user } = useAuth();
@@ -136,8 +136,8 @@ const Onboarding = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="w-24 h-24 bg-gray-100 rounded-lg mx-auto mb-4 flex items-center justify-center border-2 border-dashed border-gray-300">
-                <span className="text-gray-400 text-sm">Logo</span>
+              <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center rounded-2xl shadow-lg">
+                <BrandLogo />
               </div>
               <p className="text-sm text-gray-600">
                 Upload your company logo (optional)

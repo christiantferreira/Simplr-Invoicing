@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,12 +21,15 @@ const Login = () => {
     window.location.reload();
   };
 
-  return (    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
-      <div className="w-full max-w-md">        <div className="text-center mb-8">          <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: '#9333EA', transition: 'background-color 0.3s' }}>
-            <span className="text-white font-bold text-2xl">S</span>
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="h-12 w-12 mx-auto mb-4 flex items-center justify-center rounded-2xl shadow-lg">
+            <BrandLogo />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Simplr Invoicing</h1>
-          <p className="text-gray-600 mt-2">Professional invoicing made simple</p>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
+          <p className="text-gray-600 mt-2">Sign in to continue</p>
         </div>
 
         <Card>
@@ -57,7 +61,7 @@ const Login = () => {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600">
+              <Button type="submit" className="w-full">
                 Sign In
               </Button>
             </form>
