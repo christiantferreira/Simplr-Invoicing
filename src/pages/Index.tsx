@@ -5,15 +5,17 @@ import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
-import Dashboard from '@/pages/Dashboard';
-import ClientsList from '@/pages/ClientsList';
-import InvoicesList from '@/pages/InvoicesList';
-import InvoiceEditor from '@/pages/InvoiceEditor';
-import InvoicePreview from '@/pages/InvoicePreview';
-import Settings from '@/pages/Settings';
-import Auth from '@/pages/Auth';
-import Onboarding from '@/pages/Onboarding';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import {
+  LazyDashboard,
+  LazyClientsList,
+  LazyInvoicesList,
+  LazyInvoiceEditor,
+  LazyInvoicePreview,
+  LazySettings,
+  LazyAuth,
+  LazyOnboarding,
+} from '@/components/LazyComponents';
 
 const AppContent = () => {
   const { user, loading: authLoading } = useAuth();
@@ -75,13 +77,25 @@ const AppContent = () => {
   // If no user, show auth page
   if (!user) {
     console.log('No user, showing Auth page');
-    return <Auth />;
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>}>
+        <LazyAuth />
+      </Suspense>
+    );
   }
 
   // If user exists but hasn't completed setup, show onboarding
   if (hasCompletedSetup === false) {
     console.log('User exists but setup not completed, showing Onboarding');
-    return <Onboarding />;
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>}>
+        <LazyOnboarding />
+      </Suspense>
+    );
   }
 
   // If setup status is still being checked, show loading
@@ -99,16 +113,20 @@ const AppContent = () => {
   return (
     <InvoiceProvider>
       <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/clients" element={<ClientsList />} />
-          <Route path="/invoices" element={<InvoicesList />} />
-          <Route path="/invoices/new" element={<InvoiceEditor />} />
-          <Route path="/invoices/:id/edit" element={<InvoiceEditor />} />
-          <Route path="/invoices/:id/preview" element={<InvoicePreview />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>}>
+          <Routes>
+            <Route path="/" element={<LazyDashboard />} />
+            <Route path="/clients" element={<LazyClientsList />} />
+            <Route path="/invoices" element={<LazyInvoicesList />} />
+            <Route path="/invoices/new" element={<LazyInvoiceEditor />} />
+            <Route path="/invoices/:id/edit" element={<LazyInvoiceEditor />} />
+            <Route path="/invoices/:id/preview" element={<LazyInvoicePreview />} />
+            <Route path="/settings" element={<LazySettings />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </Layout>
     </InvoiceProvider>
   );
