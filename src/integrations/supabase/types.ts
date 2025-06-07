@@ -51,44 +51,86 @@ export type Database = {
       company_info: {
         Row: {
           address: string | null
+          address_extra_type: string | null
+          address_extra_value: string | null
+          business_legal_name: string
+          business_number: string | null
+          city: string
           company_name: string | null
+          county: string | null
           created_at: string
           email: string | null
           gst_number: string | null
           id: string
           invoice_prefix: string | null
           invoice_start_number: number | null
+          is_service_provider: boolean
           phone_number: string | null
+          postal_code: string
           primary_color: string | null
+          province: string
           secondary_color: string | null
+          service_area: string | null
+          service_type: string | null
+          street_name: string
+          street_number: string
+          trade_name: string | null
           user_id: string | null
         }
         Insert: {
           address?: string | null
+          address_extra_type?: string | null
+          address_extra_value?: string | null
+          business_legal_name: string
+          business_number?: string | null
+          city: string
           company_name?: string | null
+          county?: string | null
           created_at?: string
           email?: string | null
           gst_number?: string | null
           id?: string
           invoice_prefix?: string | null
           invoice_start_number?: number | null
+          is_service_provider?: boolean
           phone_number?: string | null
+          postal_code: string
           primary_color?: string | null
+          province: string
           secondary_color?: string | null
+          service_area?: string | null
+          service_type?: string | null
+          street_name: string
+          street_number: string
+          trade_name?: string | null
           user_id?: string | null
         }
         Update: {
           address?: string | null
+          address_extra_type?: string | null
+          address_extra_value?: string | null
+          business_legal_name?: string
+          business_number?: string | null
+          city?: string
           company_name?: string | null
+          county?: string | null
           created_at?: string
           email?: string | null
           gst_number?: string | null
           id?: string
           invoice_prefix?: string | null
           invoice_start_number?: number | null
+          is_service_provider?: boolean
           phone_number?: string | null
+          postal_code?: string
           primary_color?: string | null
+          province?: string
           secondary_color?: string | null
+          service_area?: string | null
+          service_type?: string | null
+          street_name?: string
+          street_number?: string
+          trade_name?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -198,6 +240,35 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      other_service_types_log: {
+        Row: {
+          created_at: string | null
+          entered_service: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entered_service: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entered_service?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "other_service_types_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]

@@ -80,9 +80,11 @@ const Auth = () => {
 
       if (data.user && !data.session) {
         toast.success('Please check your email to confirm your account!');
+        // Redirect to onboarding after signup
+        window.location.href = '/onboarding';
       } else if (data.session) {
         toast.success('Account created successfully!');
-        window.location.href = '/';
+        window.location.href = '/onboarding';
       }
     } catch (error: any) {
       toast.error('An unexpected error occurred');

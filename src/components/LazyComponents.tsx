@@ -9,6 +9,7 @@ export const LazyInvoicePreview = lazy(() => import('@/pages/InvoicePreview'));
 export const LazySettings = lazy(() => import('@/pages/Settings'));
 export const LazyAuth = lazy(() => import('@/pages/Auth'));
 export const LazyOnboarding = lazy(() => import('@/pages/Onboarding'));
+export const LazyWaitingForVerification = lazy(() => import('@/pages/WaitingForVerification'));
 
 // Lazy load feature components
 export const LazyInvoicePreviewPanel = lazy(() => 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,18 +6,52 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useInvoice } from '@/features/invoices';
 import { toast } from 'sonner';
+import {
+  CANADIAN_PROVINCES,
+  ADDRESS_EXTRA_TYPES,
+  SERVICE_AREA_OPTIONS,
+  getServiceTypesForArea,
+  CANADIAN_POSTAL_CODE_REGEX,
+  CANADIAN_GST_REGEX,
+  extractBusinessNumber,
+} from '@/constants/serviceTypes';
 
 interface CompanySettings {
   id?: string;
+  // Business Information
+  business_legal_name: string;
+  trade_name: string;
   company_name: string;
-  address: string;
-  phone_number: string;
   email: string;
+  phone_number: string;
+  
+  // Address Information
+  province: string;
+  city: string;
+  address_extra_type: string;
+  address_extra_value: string;
+  street_number: string;
+  street_name: string;
+  county: string;
+  postal_code: string;
+  address: string; // Formatted address for backward compatibility
+  
+  // Service Provider Information
+  is_service_provider: boolean;
+  service_area: string;
+  service_type: string;
+  
+  // GST Information
   gst_number: string;
+  business_number: string;
+  
+  // Invoice Settings
   primary_color: string;
   secondary_color: string;
   invoice_prefix: string;
@@ -30,7 +63,7 @@ interface TaxConfiguration {
   province_code: string;
   tax_name: string;
   tax_rate: number;
-  is_enabled: boolean;
+  is_enabled: boolean | null;
 }
 
 const Settings = () => {
@@ -39,11 +72,25 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<CompanySettings>({
+    business_legal_name: '',
+    trade_name: '',
     company_name: '',
-    address: '',
-    phone_number: '',
     email: '',
+    phone_number: '',
+    province: '',
+    city: '',
+    address_extra_type: '',
+    address_extra_value: '',
+    street_number: '',
+    street_name: '',
+    county: '',
+    postal_code: '',
+    address: '',
+    is_service_provider: true,
+    service_area: '',
+    service_type: '',
     gst_number: '',
+    business_number: '',
     primary_color: '#3B82F6',
     secondary_color: '#6B7280',
     invoice_prefix: '',
@@ -86,11 +133,25 @@ const Settings = () => {
         console.log('Found company data:', companyData);
         setFormData({
           id: companyData.id,
+          business_legal_name: companyData.business_legal_name || '',
+          trade_name: companyData.trade_name || '',
           company_name: companyData.company_name || '',
-          address: companyData.address || '',
-          phone_number: companyData.phone_number || '',
           email: companyData.email || '',
+          phone_number: companyData.phone_number || '',
+          province: companyData.province || '',
+          city: companyData.city || '',
+          address_extra_type: companyData.address_extra_type || '',
+          address_extra_value: companyData.address_extra_value || '',
+          street_number: companyData.street_number || '',
+          street_name: companyData.street_name || '',
+          county: companyData.county || '',
+          postal_code: companyData.postal_code || '',
+          address: companyData.address || '',
+          is_service_provider: companyData.is_service_provider ?? true,
+          service_area: companyData.service_area || '',
+          service_type: companyData.service_type || '',
           gst_number: companyData.gst_number || '',
+          business_number: companyData.business_number || '',
           primary_color: companyData.primary_color || '#3B82F6',
           secondary_color: companyData.secondary_color || '#6B7280',
           invoice_prefix: companyData.invoice_prefix || '',
@@ -196,13 +257,34 @@ const Settings = () => {
 
     setSaving(true);
     try {
+      // Build formatted address
+      const formattedAddress = `${formData.street_number} ${formData.street_name}${
+        formData.address_extra_type && formData.address_extra_value 
+          ? `, ${formData.address_extra_type} ${formData.address_extra_value}` 
+          : ''
+      }, ${formData.city}, ${formData.province} ${formData.postal_code}`;
+
       const saveData = {
         user_id: user.id,
+        business_legal_name: formData.business_legal_name,
+        trade_name: formData.trade_name || null,
         company_name: formData.company_name,
-        address: formData.address,
-        phone_number: formData.phone_number,
         email: formData.email,
-        gst_number: formData.gst_number,
+        phone_number: formData.phone_number,
+        province: formData.province,
+        city: formData.city,
+        address_extra_type: formData.address_extra_type || null,
+        address_extra_value: formData.address_extra_value || null,
+        street_number: formData.street_number,
+        street_name: formData.street_name,
+        county: formData.county || null,
+        postal_code: formData.postal_code,
+        address: formattedAddress,
+        is_service_provider: formData.is_service_provider,
+        service_area: formData.service_area || null,
+        service_type: formData.service_type || null,
+        gst_number: formData.gst_number || null,
+        business_number: formData.business_number || null,
         primary_color: formData.primary_color,
         secondary_color: formData.secondary_color,
         invoice_prefix: formData.invoice_prefix,
@@ -256,9 +338,18 @@ const Settings = () => {
     }
   };
 
-  const handleChange = (field: keyof CompanySettings, value: string | number) => {
+  const handleChange = (field: keyof CompanySettings, value: string | number | boolean) => {
     console.log(`Updating field ${field} to:`, value);
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-extract business number when GST number changes
+      if (field === 'gst_number' && typeof value === 'string') {
+        updated.business_number = extractBusinessNumber(value);
+      }
+      
+      return updated;
+    });
   };
 
   const handleTaxToggle = async (taxId: string, enabled: boolean) => {
@@ -307,20 +398,42 @@ const Settings = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Company Information */}
+        {/* Business Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Company Information</CardTitle>
+            <CardTitle>Business Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="companyName">Company Name *</Label>
+                <Label htmlFor="business_legal_name">Business Legal Name *</Label>
                 <Input
-                  id="companyName"
+                  id="business_legal_name"
+                  value={formData.business_legal_name}
+                  onChange={(e) => handleChange('business_legal_name', e.target.value)}
+                  placeholder="Your business legal name"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="trade_name">Trade Name</Label>
+                <Input
+                  id="trade_name"
+                  value={formData.trade_name}
+                  onChange={(e) => handleChange('trade_name', e.target.value)}
+                  placeholder="Operating/trade name (if different)"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="company_name">Display Name *</Label>
+                <Input
+                  id="company_name"
                   value={formData.company_name}
                   onChange={(e) => handleChange('company_name', e.target.value)}
-                  placeholder="Your company name"
+                  placeholder="Name shown on invoices"
                   required
                 />
               </div>
@@ -337,36 +450,227 @@ const Settings = () => {
               </div>
             </div>
 
+            <div>
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                value={formData.phone_number}
+                onChange={(e) => handleChange('phone_number', e.target.value)}
+                placeholder="+1 (555) 123-4567"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Address Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Business Address</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="province">Province *</Label>
+                <Select value={formData.province} onValueChange={(value) => handleChange('province', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select province" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CANADIAN_PROVINCES.map((province) => (
+                      <SelectItem key={province.code} value={province.code}>
+                        {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="city">City *</Label>
                 <Input
-                  id="phone"
-                  value={formData.phone_number}
-                  onChange={(e) => handleChange('phone_number', e.target.value)}
-                  placeholder="+1 (555) 123-4567"
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => handleChange('city', e.target.value)}
+                  placeholder="Enter city"
+                  required
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="gstNumber">GST Number</Label>
+                <Label htmlFor="street_number">Street Number *</Label>
                 <Input
-                  id="gstNumber"
-                  value={formData.gst_number}
-                  onChange={(e) => handleChange('gst_number', e.target.value)}
-                  placeholder="Enter your business GST number"
+                  id="street_number"
+                  value={formData.street_number}
+                  onChange={(e) => handleChange('street_number', e.target.value)}
+                  placeholder="123"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="street_name">Street Name *</Label>
+                <Input
+                  id="street_name"
+                  value={formData.street_name}
+                  onChange={(e) => handleChange('street_name', e.target.value)}
+                  placeholder="Main Street"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="address_extra_type">Address Extra Type</Label>
+                <Select value={formData.address_extra_type} onValueChange={(value) => handleChange('address_extra_type', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ADDRESS_EXTRA_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="address_extra_value">Address Extra Value</Label>
+                <Input
+                  id="address_extra_value"
+                  value={formData.address_extra_value}
+                  onChange={(e) => handleChange('address_extra_value', e.target.value)}
+                  placeholder="e.g., 101, A, etc."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="county">County</Label>
+                <Input
+                  id="county"
+                  value={formData.county}
+                  onChange={(e) => handleChange('county', e.target.value)}
+                  placeholder="Enter county"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="address">Business Address</Label>
-              <Textarea
-                id="address"
-                value={formData.address}
-                onChange={(e) => handleChange('address', e.target.value)}
-                placeholder="123 Business St, City, State 12345"
-                rows={3}
+              <Label htmlFor="postal_code">Postal Code *</Label>
+              <Input
+                id="postal_code"
+                value={formData.postal_code}
+                onChange={(e) => handleChange('postal_code', e.target.value.toUpperCase())}
+                placeholder="A1A 1A1"
+                required
               />
+              {formData.postal_code && !CANADIAN_POSTAL_CODE_REGEX.test(formData.postal_code) && (
+                <p className="text-sm text-destructive mt-1">Please enter a valid Canadian postal code</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Service Provider Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Provider Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is_service_provider"
+                checked={formData.is_service_provider}
+                onCheckedChange={(checked) => handleChange('is_service_provider', checked)}
+              />
+              <Label htmlFor="is_service_provider">Service Provider</Label>
+            </div>
+
+            {formData.is_service_provider && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="service_area">Service Area</Label>
+                  <Select 
+                    value={formData.service_area} 
+                    onValueChange={(value) => {
+                      handleChange('service_area', value);
+                      handleChange('service_type', ''); // Reset service type when area changes
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select service area" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SERVICE_AREA_OPTIONS.map((area) => (
+                        <SelectItem key={area} value={area}>
+                          {area}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formData.service_area && (
+                  <div>
+                    <Label htmlFor="service_type">Service Type</Label>
+                    <Select value={formData.service_type} onValueChange={(value) => handleChange('service_type', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select service type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getServiceTypesForArea(formData.service_area).map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* GST Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>GST Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="gst_number">GST Number</Label>
+                <Input
+                  id="gst_number"
+                  value={formData.gst_number}
+                  onChange={(e) => handleChange('gst_number', e.target.value)}
+                  placeholder="123456789RT0001"
+                />
+                {formData.gst_number && !CANADIAN_GST_REGEX.test(formData.gst_number) && (
+                  <p className="text-sm text-destructive mt-1">
+                    Please enter a valid GST number (9 digits + RT + 4 digits)
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <Label htmlFor="business_number">Business Number</Label>
+                <Input
+                  id="business_number"
+                  value={formData.business_number}
+                  onChange={(e) => handleChange('business_number', e.target.value)}
+                  placeholder="123456789"
+                  disabled
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Automatically extracted from GST number
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -430,7 +734,7 @@ const Settings = () => {
                 <div key={tax.id} className="flex items-center space-x-3 p-3 border rounded-lg">
                   <Checkbox
                     id={tax.id}
-                    checked={tax.is_enabled}
+                    checked={tax.is_enabled ?? false}
                     onCheckedChange={(checked) => handleTaxToggle(tax.id, checked as boolean)}
                   />
                   <div className="flex-1">

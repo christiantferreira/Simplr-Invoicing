@@ -15,6 +15,7 @@ import {
   LazySettings,
   LazyAuth,
   LazyOnboarding,
+  LazyWaitingForVerification,
 } from '@/components/LazyComponents';
 
 const AppContent = () => {
@@ -82,6 +83,18 @@ const AppContent = () => {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>}>
         <LazyAuth />
+      </Suspense>
+    );
+  }
+
+  // If user exists but email is not verified, show waiting for verification
+  if (user && !user.email_confirmed_at) {
+    console.log('User exists but email not verified, showing WaitingForVerification');
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>}>
+        <LazyWaitingForVerification />
       </Suspense>
     );
   }
