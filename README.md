@@ -1,4 +1,4 @@
-# Simplr Invoice Flow
+# Simplr Invoicing
 
 A professional invoicing app built with **Vite**, **React**, **TypeScript**, **shadcn-ui**, **Tailwind CSS**, and **Supabase**.  
 Originally bootstrapped using [Lovable.dev](https://lovable.dev), now fully editable via local development tools.
@@ -10,8 +10,8 @@ Originally bootstrapped using [Lovable.dev](https://lovable.dev), now fully edit
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/christiantoferreira/simplr-invoice-flow.git
-cd simplr-invoice-flow
+git clone https://github.com/christiantoferreira/simplr-invoicing.git
+cd simplr-invoicing
 ```
 
 ### 2. Install Dependencies
@@ -56,7 +56,7 @@ Then open: [http://localhost:3000](http://localhost:3000)
 ## 📁 Project Structure
 
 ```
-simplr-invoice-flow/
+simplr-invoicing/
 ├── public/                       # Static files
 ├── src/
 │   ├── components/              # Reusable UI components
