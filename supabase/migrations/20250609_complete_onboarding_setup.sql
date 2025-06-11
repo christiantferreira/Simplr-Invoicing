@@ -22,11 +22,26 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_at timestamp with time zone DEFAULT now()
 );
 
+-- Create other_service_types_log table for custom service logging
+CREATE TABLE IF NOT EXISTS other_service_types_log (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+    entered_service text NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
 -- Enable RLS on settings table
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
+-- Enable RLS on other_service_types_log table
+ALTER TABLE other_service_types_log ENABLE ROW LEVEL SECURITY;
+
 -- Create RLS policy for settings
 CREATE POLICY "Users can manage their own settings" ON settings
+    FOR ALL USING (auth.uid() = user_id);
+
+-- Create RLS policy for other_service_types_log
+CREATE POLICY "Users can manage their own service logs" ON other_service_types_log
     FOR ALL USING (auth.uid() = user_id);
 
 -- Create updated_at trigger for settings
