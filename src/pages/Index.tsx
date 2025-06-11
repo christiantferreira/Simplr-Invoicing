@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { InvoiceProvider } from '@/features/invoices';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
@@ -38,21 +37,26 @@ const AppContent = () => {
 
       setSetupLoading(true);
       try {
-        console.log('Fetching company info for user:', user.id);
-        const { data, error } = await supabase
-          .from('company_info')
-          .select('id')
+        console.log('Fetching settings for user:', user.id);
+        const { data, error } = await (supabase as any)
+          .from('settings')
+          .select('has_completed_setup')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
+          .single();
         
-        console.log('Company info result:', { data, error });
+        console.log('Settings result:', { data, error });
         
         if (error) {
-          console.error('Error fetching company info:', error);
-          setHasCompletedSetup(false);
+          if (error.code === 'PGRST116') {
+            // No settings record found - user hasn't completed setup
+            console.log('No settings record found - setup not completed');
+            setHasCompletedSetup(false);
+          } else {
+            console.error('Error fetching settings:', error);
+            setHasCompletedSetup(false);
+          }
         } else {
-          setHasCompletedSetup(data && data.length > 0);
+          setHasCompletedSetup(data?.has_completed_setup || false);
         }
       } catch (error) {
         console.error('Exception checking setup status:', error);
@@ -87,18 +91,6 @@ const AppContent = () => {
     );
   }
 
-  // If user exists but email is not verified, show waiting for verification
-  if (user && !user.email_confirmed_at) {
-    console.log('User exists but email not verified, showing WaitingForVerification');
-    return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>}>
-        <LazyWaitingForVerification />
-      </Suspense>
-    );
-  }
-
   // If user exists but hasn't completed setup, show onboarding
   if (hasCompletedSetup === false) {
     console.log('User exists but setup not completed, showing Onboarding');
@@ -107,6 +99,18 @@ const AppContent = () => {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>}>
         <LazyOnboarding />
+      </Suspense>
+    );
+  }
+
+  // If user exists but email is not verified, show waiting for verification
+  if (user && !user.email_confirmed_at) {
+    console.log('User exists but email not verified, showing WaitingForVerification');
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>}>
+        <LazyWaitingForVerification />
       </Suspense>
     );
   }
@@ -121,8 +125,8 @@ const AppContent = () => {
     );
   }
 
-  // User is authenticated and has completed setup
-  console.log('User authenticated and setup complete, showing main app');
+  // User is authenticated, email verified, and has completed setup
+  console.log('User authenticated, verified, and setup complete, showing main app');
   return (
     <InvoiceProvider>
       <Layout>
@@ -150,7 +154,11 @@ const Index = () => {
     <ThemeProvider defaultTheme="system" storageKey="simplr-invoicing-theme">
       <AuthProvider>
         <Router>
-          <AppContent />
+          <Routes>
+            <Route path="/onboarding" element={<LazyOnboarding />} />
+            <Route path="/waiting-for-verification" element={<LazyWaitingForVerification />} />
+            <Route path="*" element={<AppContent />} />
+          </Routes>
         </Router>
       </AuthProvider>
     </ThemeProvider>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { BrandLogo } from '@/components/BrandLogo';
 import {
@@ -48,10 +47,20 @@ interface OnboardingData {
   gst_number: string;
 }
 
-const OnboardingWizard = () => {
-  const { user } = useAuth();
+interface OnboardingWizardProps {
+  user: {
+    id: string;
+    email?: string;
+    email_confirmed_at?: string;
+  };
+  onFinished: () => void;
+}
+
+const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onFinished }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [countdown, setCountdown] = useState(5);
   const [formData, setFormData] = useState<OnboardingData>({
     business_legal_name: '',
     has_trade_name: false,
@@ -74,6 +83,19 @@ const OnboardingWizard = () => {
 
   const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
+
+  // Countdown effect for success message
+  useEffect(() => {
+    if (showSuccessMessage && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (showSuccessMessage && countdown === 0) {
+      // Redirect to auth page
+      window.location.href = '/auth';
+    }
+  }, [showSuccessMessage, countdown]);
 
   const updateFormData = (field: keyof OnboardingData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -139,11 +161,11 @@ const OnboardingWizard = () => {
       setCurrentStep(currentStep + 1);
     } else {
       // Complete onboarding
-      await handleComplete();
+      await saveAll();
     }
   };
 
-  const handleComplete = async () => {
+  const saveAll = async () => {
     if (!user) {
       toast.error('User not authenticated');
       return;
@@ -156,11 +178,11 @@ const OnboardingWizard = () => {
         await logCustomService();
       }
 
-      // Prepare company info data
-      const companyData = {
+      // Prepare settings data
+      const settingsData = {
         user_id: user.id,
         business_legal_name: formData.business_legal_name,
-        trade_name: formData.has_trade_name ? formData.trade_name : null,
+        trade_name: formData.has_trade_name && formData.trade_name ? formData.trade_name : null,
         province: formData.province,
         city: formData.city,
         address_extra_type: formData.address_extra_type || null,
@@ -172,22 +194,14 @@ const OnboardingWizard = () => {
         is_service_provider: formData.is_service_provider,
         service_area: formData.service_area || null,
         service_type: formData.service_type || null,
-        gst_number: formData.has_gst ? formData.gst_number : null,
-        business_number: formData.has_gst ? extractBusinessNumber(formData.gst_number) : null,
-        // Set default values for existing fields
-        company_name: formData.business_legal_name, // Use legal name as company name
-        address: `${formData.street_number} ${formData.street_name}${formData.address_extra_type && formData.address_extra_value ? `, ${formData.address_extra_type} ${formData.address_extra_value}` : ''}, ${formData.city}, ${formData.province} ${formData.postal_code}`,
-        email: user.email || '',
-        phone_number: '',
-        primary_color: '#3B82F6',
-        secondary_color: '#6B7280',
-        invoice_prefix: '',
-        invoice_start_number: 1,
+        gst_number: formData.has_gst && formData.gst_number ? formData.gst_number : null,
+        business_number: formData.has_gst && formData.gst_number ? extractBusinessNumber(formData.gst_number) : null,
+        has_completed_setup: true,
       };
 
-      const { error } = await supabase
-        .from('company_info')
-        .upsert(companyData, { onConflict: 'user_id' });
+      const { error } = await (supabase as any)
+        .from('settings')
+        .upsert(settingsData, { onConflict: 'user_id' });
 
       if (error) {
         console.error('Error saving onboarding data:', error);
@@ -195,8 +209,8 @@ const OnboardingWizard = () => {
         return;
       }
 
-      toast.success('Onboarding completed successfully!');
-      window.location.href = '/waiting-for-verification';
+      // Show success message instead of immediate redirect
+      setShowSuccessMessage(true);
     } catch (error) {
       console.error('Error completing onboarding:', error);
       toast.error('An unexpected error occurred. Please try again.');
@@ -511,7 +525,7 @@ const OnboardingWizard = () => {
 
   const getButtonText = () => {
     if (currentStep === 1) return 'Start';
-    if (currentStep === totalSteps) return 'Save & Continue';
+    if (currentStep === totalSteps) return 'Finish and Save';
     return 'Next';
   };
 
@@ -520,6 +534,44 @@ const OnboardingWizard = () => {
     if (currentStep === 1) return false;
     return !validateStep();
   };
+
+  if (showSuccessMessage) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
+        <div className="w-full max-w-2xl">
+          <Card>
+            <CardContent className="text-center py-12">
+              <div className="w-20 h-20 bg-green-500 rounded-full mx-auto mb-6 flex items-center justify-center">
+                <svg
+                  className="w-10 h-10 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Thank you for setting up your account!
+              </h3>
+              <p className="text-lg text-gray-600 mb-6">
+                Your business information has been saved successfully. You'll be redirected to sign in shortly.
+              </p>
+              <div className="text-sm text-gray-500">
+                Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
