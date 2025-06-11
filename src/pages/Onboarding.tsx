@@ -8,27 +8,20 @@ const Onboarding = () => {
   const user = location.state?.user;
 
   useEffect(() => {
-    // Redirect to auth if no user in location state
     if (!user) {
-      navigate('/', { replace: true });
+      navigate('/auth', { replace: true });
     }
   }, [user, navigate]);
 
-  const handleFinished = () => {
-    if (user?.email_confirmed_at) {
-      // Email is verified, go to main app
-      navigate('/', { replace: true });
-    } else {
-      // Email not verified, go to waiting page
-      navigate('/waiting-for-verification', { replace: true });
-    }
-  };
-
   if (!user) {
-    return null;
+    return null; // Redirecting, so no need to render anything
   }
 
-  return <OnboardingWizard user={user} onFinished={handleFinished} />;
+  return (
+    <div className="min-h-screen bg-background">
+      <OnboardingWizard user={user} />
+    </div>
+  );
 };
 
 export default Onboarding;

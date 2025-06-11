@@ -332,6 +332,75 @@ export type Database = {
         }
         Relationships: []
       }
+      settings: {
+        Row: {
+          id: string
+          user_id: string | null
+          business_legal_name: string
+          trade_name: string | null
+          province: string
+          city: string
+          address_extra_type: string | null
+          address_extra_value: string | null
+          street_number: string
+          street_name: string
+          county: string | null
+          postal_code: string
+          is_service_provider: boolean
+          service_area: string | null
+          service_type: string | null
+          gst_number: string | null
+          business_number: string | null
+          has_completed_setup: boolean
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          business_legal_name: string
+          trade_name?: string | null
+          province: string
+          city: string
+          address_extra_type?: string | null
+          address_extra_value?: string | null
+          street_number: string
+          street_name: string
+          county?: string | null
+          postal_code: string
+          is_service_provider?: boolean
+          service_area?: string | null
+          service_type?: string | null
+          gst_number?: string | null
+          business_number?: string | null
+          has_completed_setup?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          business_legal_name?: string
+          trade_name?: string | null
+          province?: string
+          city?: string
+          address_extra_type?: string | null
+          address_extra_value?: string | null
+          street_number?: string
+          street_name?: string
+          county?: string | null
+          postal_code?: string
+          is_service_provider?: boolean
+          service_area?: string | null
+          service_type?: string | null
+          gst_number?: string | null
+          business_number?: string | null
+          has_completed_setup?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tax_configurations: {
         Row: {
           created_at: string

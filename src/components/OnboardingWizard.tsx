@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { BrandLogo } from '@/components/BrandLogo';
 import {
@@ -48,10 +47,21 @@ interface OnboardingData {
   gst_number: string;
 }
 
-const OnboardingWizard = () => {
-  const { user } = useAuth();
+interface SupabaseUser {
+  id: string;
+  email?: string;
+  // Add other potential properties if needed, or use a more specific type if available
+  [key: string]: unknown;
+}
+
+interface OnboardingWizardProps {
+  user: SupabaseUser;
+}
+
+const OnboardingWizard = ({ user }: OnboardingWizardProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
   const [formData, setFormData] = useState<OnboardingData>({
     business_legal_name: '',
     has_trade_name: false,
@@ -146,6 +156,7 @@ const OnboardingWizard = () => {
   const handleComplete = async () => {
     if (!user) {
       toast.error('User not authenticated');
+      window.location.href = '/auth';
       return;
     }
 
@@ -156,8 +167,8 @@ const OnboardingWizard = () => {
         await logCustomService();
       }
 
-      // Prepare company info data
-      const companyData = {
+      // Prepare settings data
+      const settingsData = {
         user_id: user.id,
         business_legal_name: formData.business_legal_name,
         trade_name: formData.has_trade_name ? formData.trade_name : null,
@@ -174,29 +185,32 @@ const OnboardingWizard = () => {
         service_type: formData.service_type || null,
         gst_number: formData.has_gst ? formData.gst_number : null,
         business_number: formData.has_gst ? extractBusinessNumber(formData.gst_number) : null,
-        // Set default values for existing fields
-        company_name: formData.business_legal_name, // Use legal name as company name
-        address: `${formData.street_number} ${formData.street_name}${formData.address_extra_type && formData.address_extra_value ? `, ${formData.address_extra_type} ${formData.address_extra_value}` : ''}, ${formData.city}, ${formData.province} ${formData.postal_code}`,
-        email: user.email || '',
-        phone_number: '',
-        primary_color: '#3B82F6',
-        secondary_color: '#6B7280',
-        invoice_prefix: '',
-        invoice_start_number: 1,
+        has_completed_setup: true,
       };
 
+      console.log('settingsData', settingsData);
+      console.log('current user', user);
+
       const { error } = await supabase
-        .from('company_info')
-        .upsert(companyData, { onConflict: 'user_id' });
+        .from('settings')
+        .upsert(settingsData, { onConflict: 'user_id' });
 
       if (error) {
         console.error('Error saving onboarding data:', error);
+        console.error('Supabase error', JSON.stringify(error, null, 2));
         toast.error('Error saving your information. Please try again.');
         return;
       }
 
+      // Show thank you message instead of immediate navigation
+      setShowThankYou(true);
+      
+      // Set timer for redirect after 5 seconds
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 5000);
+
       toast.success('Onboarding completed successfully!');
-      window.location.href = '/waiting-for-verification';
     } catch (error) {
       console.error('Error completing onboarding:', error);
       toast.error('An unexpected error occurred. Please try again.');
@@ -521,41 +535,71 @@ const OnboardingWizard = () => {
     return !validateStep();
   };
 
+  const renderContent = () => {
+    if (showThankYou) {
+      return (
+        <div className="text-center space-y-6 py-8">
+          <div className="w-16 h-16 bg-green-100 rounded-full mx-auto flex items-center justify-center">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold mb-3">Thank you!</h3>
+            <p className="text-muted-foreground">
+              Your information has been saved. Please check your email to confirm your account.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              You will be redirected shortly...
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {renderStep()}
+        <div className="flex justify-between mt-8">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={currentStep === 1 || loading}
+            className="flex items-center"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <Button
+            onClick={handleNext}
+            disabled={isNextDisabled()}
+            className="flex items-center bg-primary hover:bg-primary/90"
+          >
+            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {getButtonText()}
+            {currentStep !== totalSteps && !loading && <ArrowRight className="w-4 h-4 ml-2" />}
+          </Button>
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
       <div className="w-full max-w-2xl">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between mb-2">
-              <CardTitle>Step {currentStep} of {totalSteps}</CardTitle>
-              <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
-            </div>
-            <Progress value={progress} className="mb-2" />
-            <CardTitle className="text-lg">{getStepTitle()}</CardTitle>
+            {!showThankYou && (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <CardTitle>Step {currentStep} of {totalSteps}</CardTitle>
+                  <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} className="mb-2" />
+                <CardTitle className="text-lg">{getStepTitle()}</CardTitle>
+              </>
+            )}
           </CardHeader>
           <CardContent>
-            {renderStep()}
-
-            <div className="flex justify-between mt-8">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                disabled={currentStep === 1 || loading}
-                className="flex items-center"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-              <Button
-                onClick={handleNext}
-                disabled={isNextDisabled()}
-                className="flex items-center bg-primary hover:bg-primary/90"
-              >
-                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {getButtonText()}
-                {currentStep !== totalSteps && !loading && <ArrowRight className="w-4 h-4 ml-2" />}
-              </Button>
-            </div>
+            {renderContent()}
           </CardContent>
         </Card>
       </div>
