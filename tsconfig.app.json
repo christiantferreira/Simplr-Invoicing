@@ -23,7 +23,8 @@
 
     "baseUrl": ".",
 "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "components/*": ["./src/components/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },

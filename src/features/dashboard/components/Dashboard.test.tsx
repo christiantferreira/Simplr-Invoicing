@@ -21,7 +21,7 @@ describe('Dashboard', () => {
       { status: 'sent', total_invoices: 5, total_amount: 2500 },
       { status: 'overdue', total_invoices: 2, total_amount: 1000 },
     ];
-    (supabase.rpc as any).mockResolvedValue({ data: mockStats, error: null });
+    (supabase.rpc as any).mockResolvedValue({ data: mockStats, error: null }); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     render(
       <QueryClientProvider client={queryClient}>
