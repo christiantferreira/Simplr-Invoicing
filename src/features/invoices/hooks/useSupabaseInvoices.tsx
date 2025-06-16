@@ -86,12 +86,14 @@ export const useSupabaseInvoices = () => {
       console.log('Loaded clients:', data);
       const formattedClients: Client[] = (data || []).map(client => ({
         id: client.id,
-        name: client.contact_name || '',
+        user_id: client.user_id || '',
+        name: client.name || '',
         email: client.email || '',
-        phone: client.phone_number || '',
-        company: client.company_name || '',
+        phone: client.phone || '',
+        company: client.company || '',
         address: client.address || '',
         createdAt: client.created_at ? new Date(client.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        created_at: client.created_at || '',
       }));
       
       setClients(formattedClients);
@@ -145,28 +147,37 @@ export const useSupabaseInvoices = () => {
           .filter(item => item.invoice_id === invoice.id)
           .map(item => ({
             id: item.id,
+            invoice_id: item.invoice_id || '',
             description: item.description || '',
             quantity: item.quantity || 1,
             unitPrice: Number(item.unit_price) || 0,
+            unit_price: Number(item.unit_price) || 0,
             total: Number(item.total) || 0,
           }));
 
         return {
           id: invoice.id,
+          user_id: invoice.user_id || '',
           invoiceNumber: invoice.invoice_number || '',
+          invoice_number: invoice.invoice_number || '',
           clientId: invoice.client_id,
-          status: invoice.status as any || 'draft',
+          client_id: invoice.client_id || '',
+          status: (invoice.status || 'draft') as 'draft' | 'sent' | 'paid' | 'overdue',
           issueDate: invoice.issue_date || '',
+          issue_date: invoice.issue_date || '',
           dueDate: invoice.due_date || '',
+          due_date: invoice.due_date || '',
           items: invoiceItems,
           subtotal: Number(invoice.subtotal) || 0,
           discount: Number(invoice.discount) || 0,
           tax: Number(invoice.tax) || 0,
           total: Number(invoice.total) || 0,
           notes: invoice.notes || '',
-          templateId: 'classic' as any,
+          templateId: 'classic',
           createdAt: new Date(invoice.created_at).toISOString().split('T')[0],
-          updatedAt: new Date(invoice.created_at).toISOString().split('T')[0],
+          updatedAt: new Date(invoice.updated_at || invoice.created_at).toISOString().split('T')[0],
+          updated_at: invoice.updated_at || invoice.created_at || '',
+          created_at: invoice.created_at || '',
         };
       });
       
@@ -200,10 +211,10 @@ export const useSupabaseInvoices = () => {
           .from('clients')
           .insert({
             user_id: user.id,
-            company_name: 'Acme Corporation',
-            contact_name: 'John Smith',
+            company: 'Acme Corporation',
+            name: 'John Smith',
             email: 'john@acme.com',
-            phone_number: '+1 (555) 987-6543',
+            phone: '+1 (555) 987-6543',
             address: '123 Business Ave\nNew York, NY 10001'
           })
           .select()
@@ -272,7 +283,7 @@ export const useSupabaseInvoices = () => {
     }
   };
 
-  // Load data when user changes
+  // Load data and set up real-time subscriptions when user changes
   useEffect(() => {
     const loadData = async () => {
       if (!user) {
@@ -294,10 +305,45 @@ export const useSupabaseInvoices = () => {
     };
 
     loadData();
+
+    if (!user) return;
+
+    // Set up real-time subscription for clients
+    const clientSubscription = supabase
+      .channel(`clients:user:${user.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'clients',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('Client change received:', payload);
+        loadClients();
+      })
+      .subscribe();
+
+    // Set up real-time subscription for invoices
+    const invoiceSubscription = supabase
+      .channel(`invoices:user:${user.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'invoices',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('Invoice change received:', payload);
+        loadInvoices();
+      })
+      .subscribe();
+
+    return () => {
+      clientSubscription.unsubscribe();
+      invoiceSubscription.unsubscribe();
+    };
   }, [user]);
 
   // Add client to Supabase
-  const addClient = async (clientData: Omit<any, 'id' | 'createdAt'>) => {
+  const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'user_id'>) => {
     if (!user) throw new Error('User not authenticated');
 
     try {
@@ -305,10 +351,10 @@ export const useSupabaseInvoices = () => {
         .from('clients')
         .insert({
           user_id: user.id,
-          contact_name: clientData.name,
+          name: clientData.name,
           email: clientData.email,
-          phone_number: clientData.phone || null,
-          company_name: clientData.company || null,
+          phone: clientData.phone || null,
+          company: clientData.company || null,
           address: clientData.address || null,
         })
         .select()
@@ -327,7 +373,7 @@ export const useSupabaseInvoices = () => {
   };
 
   // Update invoice in Supabase
-  const updateInvoice = async (invoiceData: any) => {
+  const updateInvoice = async (invoiceData: Invoice) => {
     if (!user) throw new Error('User not authenticated');
 
     try {
@@ -335,10 +381,10 @@ export const useSupabaseInvoices = () => {
       const { error: invoiceError } = await supabase
         .from('invoices')
         .update({
-          client_id: invoiceData.clientId,
+          client_id: invoiceData.client_id,
           status: invoiceData.status,
-          issue_date: invoiceData.issueDate,
-          due_date: invoiceData.dueDate,
+          issue_date: invoiceData.issue_date,
+          due_date: invoiceData.due_date,
           subtotal: invoiceData.subtotal,
           discount: invoiceData.discount,
           tax: invoiceData.tax,
@@ -362,11 +408,11 @@ export const useSupabaseInvoices = () => {
         const { error: itemsError } = await supabase
           .from('invoice_items')
           .insert(
-            invoiceData.items.map((item: any) => ({
+            invoiceData.items.map((item: InvoiceItem) => ({
               invoice_id: invoiceData.id,
               description: item.description,
               quantity: item.quantity,
-              unit_price: item.unitPrice,
+              unit_price: item.unit_price,
               total: item.total,
             }))
           );
