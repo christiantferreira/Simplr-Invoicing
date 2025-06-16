@@ -28,10 +28,10 @@ This document outlines the pending tasks for the finalization sprint of the Simp
 
 ## Area: Frontend-Supabase Integration
 - **Task 3.3: Enhance Data Fetching Hooks and Real-Time Subscriptions** (Parcial)
-  - Expand real-time subscriptions using Supabase Realtime for live updates on invoices and clients.
-  - Implement optimistic updates for better user experience during data mutations.
-  - Add data pagination and infinite scrolling for large datasets in lists (e.g., invoice and client lists).
-  - Develop conflict resolution mechanisms for concurrent edits.
+  - ✅ Expand real-time subscriptions using Supabase Realtime for live updates on invoices and clients.
+  - ⚠️ Implement optimistic updates for better user experience during data mutations.
+  - ⚠️ Add data pagination and infinite scrolling for large datasets in lists (e.g., invoice and client lists).
+  - ⚠️ Develop conflict resolution mechanisms for concurrent edits.
 - **Task 3.5: Implement Comprehensive Error Handling and Offline Sync Strategies** (Parcial)
   - Create a global error boundary to handle unexpected errors gracefully.
   - Implement retry mechanisms with exponential backoff for failed API calls.
