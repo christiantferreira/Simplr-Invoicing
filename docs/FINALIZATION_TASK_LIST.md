@@ -13,7 +13,7 @@ This document outlines the pending tasks for the finalization sprint of the Simp
   - Define admin access policies for support and maintenance purposes.
   - Test RLS policies with multiple user scenarios to validate security.
   - Document the security model and access patterns for future reference.
-- **Task 2.4: Create Database Functions and Triggers for Business Logic** (Ausente/Errado)
+- **Task 2.4: Create Database Functions and Triggers for Business Logic** ✅ *Conforme*: Functions and triggers implemented for invoice numbers, totals, tax calculations, audit logging, and report aggregation.
   - Develop a function for automatic invoice number generation based on user settings.
   - Implement triggers for automatic calculation of invoice totals when items are added or updated.
   - Create functions for tax calculations based on provincial rates (GST/HST).
