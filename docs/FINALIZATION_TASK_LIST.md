@@ -19,7 +19,7 @@ This document outlines the pending tasks for the finalization sprint of the Simp
   - Create functions for tax calculations based on provincial rates (GST/HST).
   - Set up audit logging triggers to track changes across all critical tables.
   - Build functions for report data aggregation to improve performance.
-- **Task 2.5: Set Up Supabase Storage Buckets and Access Policies** (Ausente/Errado)
+- **Task 2.5: Set Up Supabase Storage Buckets and Access Policies** ✅ *Conforme*: Storage buckets created for PDFs, reports, and uploads with user-specific access policies.
   - Create storage buckets for PDFs, reports, and user uploads in Supabase.
   - Configure access policies to ensure user-specific access to stored files.
   - Define upload size limits and file type restrictions for security.
