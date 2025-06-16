@@ -3,11 +3,11 @@
 This document outlines the pending tasks for the finalization sprint of the Simplr Invoicing project, focusing on items marked as "Parcial" (Partially Implemented) or "Ausente/Errado" (Absent/Wrong) as per the technical review. Tasks are organized by functional area to facilitate systematic completion.
 
 ## Area: Supabase Database Design & Implementation
-- **Task 2.1: Complete Database Schema with Relationships and Constraints** (Parcial)
+- **Task 2.1: Complete Database Schema with Relationships and Constraints** ✅ *Conforme*: Schema completed with relationships, constraints, and indexes.
   - Finalize the creation of all database tables as defined in the PRD (e.g., Users, Clients, Invoices, Invoice_Items, etc.).
   - Define and implement foreign key relationships and constraints to ensure data integrity.
   - Add necessary indexes for performance optimization on frequently queried fields.
-- **Task 2.2: Implement Row Level Security (RLS) Policies for All Tables** (Ausente/Errado)
+- **Task 2.2: Implement Row Level Security (RLS) Policies for All Tables** ✅ *Conforme*: RLS policies implemented for all relevant tables.
   - Enable RLS on all user-related tables in Supabase.
   - Create RLS policies to ensure data isolation per user (e.g., users can only access their own clients and invoices).
   - Define admin access policies for support and maintenance purposes.
