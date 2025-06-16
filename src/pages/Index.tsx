@@ -15,6 +15,7 @@ import {
   LazyAuth,
   LazyOnboarding,
   LazyWaitingForVerification,
+  LazyClientInvoices,
 } from '@/components/LazyComponents';
 
 const AppContent = () => {
@@ -38,9 +39,9 @@ const AppContent = () => {
       setSetupLoading(true);
       try {
         console.log('Fetching settings for user:', user.id);
-        const { data, error } = await (supabase as any)
-          .from('settings')
-          .select('has_completed_setup')
+        const { data, error } = await supabase
+          .from('company_info')
+          .select('is_service_provider') // Assuming this field indicates setup completion
           .eq('user_id', user.id)
           .single();
         
@@ -55,8 +56,8 @@ const AppContent = () => {
             console.error('Error fetching settings:', error);
             setHasCompletedSetup(false);
           }
-        } else {
-          setHasCompletedSetup(data?.has_completed_setup || false);
+} else {
+          setHasCompletedSetup(data?.is_service_provider || false);
         }
       } catch (error) {
         console.error('Exception checking setup status:', error);
@@ -140,7 +141,8 @@ const AppContent = () => {
             <Route path="/invoices/new" element={<LazyInvoiceEditor />} />
             <Route path="/invoices/:id/edit" element={<LazyInvoiceEditor />} />
             <Route path="/invoices/:id/preview" element={<LazyInvoicePreview />} />
-            <Route path="/settings" element={<LazySettings />} />
+<Route path="/settings" element={<LazySettings />} />
+            <Route path="/clients/:clientId/invoices" element={<LazyClientInvoices />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
