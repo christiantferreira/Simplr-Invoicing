@@ -132,6 +132,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Create view for revenue report by period
+CREATE OR REPLACE VIEW revenue_report_by_period AS
+SELECT
+    DATE_TRUNC('month', invoices.issue_date)::date AS period_start,
+    SUM(CASE WHEN invoices.status != 'Draft' THEN invoices.total ELSE 0 END) AS total_invoiced,
+    SUM(CASE WHEN invoices.status = 'Paid' THEN invoices.total ELSE 0 END) AS total_paid,
+    SUM(CASE WHEN invoices.status != 'Paid' AND invoices.status != 'Draft' THEN invoices.total ELSE 0 END) AS total_outstanding
+FROM invoices
+GROUP BY period_start
+ORDER BY period_start;
+
 -- Create tax_summary_report_data table
 CREATE TABLE IF NOT EXISTS tax_summary_report_data (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -162,6 +173,16 @@ BEGIN
     GROUP BY invoices.province;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create view for tax summary report by period
+CREATE OR REPLACE VIEW tax_summary_report_by_period AS
+SELECT
+    DATE_TRUNC('month', invoices.issue_date)::date AS period_start,
+    invoices.province,
+    SUM(invoices.gst_hst) AS gst_hst_collected
+FROM invoices
+GROUP BY period_start, invoices.province
+ORDER BY period_start, invoices.province;
 
 -- Create client_performance_report_data table
 CREATE TABLE IF NOT EXISTS client_performance_report_data (
@@ -197,6 +218,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Create view for client performance report by period
+CREATE OR REPLACE VIEW client_performance_report_by_period AS
+SELECT
+    DATE_TRUNC('month', invoices.issue_date)::date AS period_start,
+    clients.id AS client_id,
+    clients.name AS client_name,
+    SUM(invoices.total) AS total_revenue
+FROM invoices
+JOIN clients ON invoices.client_id = clients.id
+GROUP BY period_start, clients.id, clients.name
+ORDER BY period_start, clients.name;
+
 -- Create invoice_status_report_data table
 CREATE TABLE IF NOT EXISTS invoice_status_report_data (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -229,6 +262,17 @@ BEGIN
     GROUP BY invoices.status;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create view for invoice status overview report by period
+CREATE OR REPLACE VIEW invoice_status_report_by_period AS
+SELECT
+    DATE_TRUNC('month', invoices.issue_date)::date AS period_start,
+    invoices.status,
+    COUNT(*) AS invoice_count,
+    SUM(invoices.total) AS total_value
+FROM invoices
+GROUP BY period_start, invoices.status
+ORDER BY period_start, invoices.status;
 
 -- Create aging_report_data table
 CREATE TABLE IF NOT EXISTS aging_report_data (
