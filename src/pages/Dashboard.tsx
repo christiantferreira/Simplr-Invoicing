@@ -5,8 +5,23 @@ import { Plus, Users, DollarSign, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useInvoice } from '@/features/invoices';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Users, DollarSign, Clock, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useInvoice } from '@/features/invoices';
 import StatusBadge from '@/components/StatusBadge';
 import { format } from 'date-fns';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Users, DollarSign, Clock, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useInvoice } from '@/features/invoices';
+import StatusBadge from '@/components/StatusBadge';
+import { format } from 'date-fns';
+import ReportGenerationEngine from '@/features/reports/components/ReportGenerationEngine';
 
 const Dashboard = () => {
   const { state, getDashboardStats } = useInvoice();
@@ -14,7 +29,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const recentInvoices = state.invoices
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
 
   const formatCurrency = (amount: number) => {
@@ -26,6 +41,10 @@ const Dashboard = () => {
 
   const handleStatCardClick = (filterType: string) => {
     navigate(`/invoices?filter=${filterType}`);
+  };
+
+  const handleGenerateReport = (startDate: Date, endDate: Date, reportType: string) => {
+    alert(`Generating ${reportType} report from ${startDate} to ${endDate}`);
   };
 
   return (
@@ -131,31 +150,86 @@ const Dashboard = () => {
           ) : (
             <div className="space-y-4">
               {recentInvoices.map((invoice) => {
-                const client = state.clients.find(c => c.id === invoice.clientId);
+                const client = state.clients.find(c => c.id === invoice.client_id);
                 return (
                   <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
-                        <span className="font-medium">{invoice.invoiceNumber}</span>
+                        <span className="font-medium">{invoice.invoice_number}</span>
                         <StatusBadge status={invoice.status} />
                       </div>
                       <p className="text-sm text-gray-600 mt-1">
-                        {client?.name || 'Unknown Client'} • {format(new Date(invoice.createdAt), 'MMM d, yyyy')}
+                        {client?.name || 'Unknown Client'} • {format(new Date(invoice.created_at), 'MMM d, yyyy')}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium">{formatCurrency(invoice.total)}</p>
-                      <p className="text-sm text-gray-500">Due {format(new Date(invoice.dueDate), 'MMM d')}</p>
+                      <p className="text-sm text-gray-500">Due {format(new Date(invoice.due_date), 'MMM d')}</p>
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </CardContent>
+</CardContent>
       </Card>
+      <ReportGenerationEngine onGenerateReport={(startDate, endDate, reportType) => handleGenerateReport(startDate, endDate, reportType)} />
     </div>
   );
 };
 
 export default Dashboard;
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
+
+<environment_details>
+# VSCode Visible Files
+src/pages/Dashboard.tsx
+
+# VSCode Open Tabs
+supabase/migrations/20250616_complete_database_schema.sql
+docs/FINALIZATION_TASK_LIST.md
+src/features/reports/components/ReportGenerationEngine.tsx
+src/pages/Dashboard.tsx
+
+# Recently Modified Files
+These files have been modified since you last accessed them (file was just edited so you may need to re-read it before editing):
+src/pages/Dashboard.tsx
+
+# Current Time
+6/17/2025, 1:47:37 PM (America/Vancouver, UTC-7:00)
+
+# Context Window Usage
+270,394 / 1,048.576K tokens used (26%)
+
+# Current Mode
+ACT MODE
+</environment_details>
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
+
+<environment_details>
+# VSCode Visible Files
+src/pages/Dashboard.tsx
+
+# VSCode Open Tabs
+supabase/migrations/20250616_complete_database_schema.sql
+docs/FINALIZATION_TASK_LIST.md
+src/features/reports/components/ReportGenerationEngine.tsx
+src/pages/Dashboard.tsx
+
+# Recently Modified Files
+These files have been modified since you last accessed them (file was just edited so you may need to re-read it before editing):
+src/pages/Dashboard.tsx
+
+# Current Time
+6/17/2025, 1:46:19 PM (America/Vancouver, UTC-7:00)
+
+# Context Window Usage
+248,999 / 1,048.576K tokens used (24%)
+
+# Current Mode
+ACT MODE
+</environment_details>
