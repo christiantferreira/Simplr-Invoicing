@@ -1,3 +1,6 @@
+[db]
+password = "${SUPABASE_DB_PASSWORD}"
+
 project_id = "qvxrcjpvoieboiykflnv"
 
 [auth]
