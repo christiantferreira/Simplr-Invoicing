@@ -83,11 +83,11 @@ This document outlines the pending tasks for the finalization sprint of the Simp
 
 ## Area: Reports & Analytics System
 - **Task 9.1: Build Comprehensive Reports Database Queries and Data Models** (Ausente/Errado) ✅
-  - Design report-specific data schemas and aggregation tables in Supabase for performance.
-  - Create SQL queries for revenue calculations by period (monthly, quarterly, yearly).
-  - Develop tax calculation queries for GST/HST breakdowns by province.
-  - Implement client performance aggregation queries for revenue and payment metrics.
-  - Build invoice aging and status tracking queries for overdue analysis.
+  - Design report-specific data schemas and aggregation tables in Supabase for performance. ✅
+  - Create SQL queries for revenue calculations by period (monthly, quarterly, yearly). ✅
+  - Develop tax calculation queries for GST/HST breakdowns by province. ✅
+  - Implement client performance aggregation queries for revenue and payment metrics. ✅
+  - Build invoice aging and status tracking queries for overdue analysis. ✅
 - **Task 9.2: Create Report Generation Engine with Date Range Selection** (Ausente/Errado)
   - Develop a report generation engine to fetch and process data based on user parameters.
   - Implement a date range picker component with validation for custom report periods.
