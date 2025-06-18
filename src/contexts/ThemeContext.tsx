@@ -37,6 +37,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     const savedTheme = localStorage.getItem(storageKey) as Theme;
     if (savedTheme) {
       setTheme(savedTheme);
+    } else {
+      setTheme('light');
     }
   }, [storageKey]);
 

@@ -1,26 +1,12 @@
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Users, DollarSign, Clock, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useInvoice } from '@/features/invoices';
+import StatusBadge from '@/components/StatusBadge';
+import { format } from 'date-fns';
 
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, Clock, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useInvoice } from '@/features/invoices';
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, Clock, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useInvoice } from '@/features/invoices';
-import StatusBadge from '@/components/StatusBadge';
-import { format } from 'date-fns';
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, Clock, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useInvoice } from '@/features/invoices';
-import StatusBadge from '@/components/StatusBadge';
-import { format } from 'date-fns';
 import ReportGenerationEngine from '@/features/reports/components/ReportGenerationEngine';
 
 const Dashboard = () => {
@@ -179,57 +165,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-</final_file_content>
-
-IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
-
-<environment_details>
-# VSCode Visible Files
-src/pages/Dashboard.tsx
-
-# VSCode Open Tabs
-supabase/migrations/20250616_complete_database_schema.sql
-docs/FINALIZATION_TASK_LIST.md
-src/features/reports/components/ReportGenerationEngine.tsx
-src/pages/Dashboard.tsx
-
-# Recently Modified Files
-These files have been modified since you last accessed them (file was just edited so you may need to re-read it before editing):
-src/pages/Dashboard.tsx
-
-# Current Time
-6/17/2025, 1:47:37 PM (America/Vancouver, UTC-7:00)
-
-# Context Window Usage
-270,394 / 1,048.576K tokens used (26%)
-
-# Current Mode
-ACT MODE
-</environment_details>
-</final_file_content>
-
-IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
-
-<environment_details>
-# VSCode Visible Files
-src/pages/Dashboard.tsx
-
-# VSCode Open Tabs
-supabase/migrations/20250616_complete_database_schema.sql
-docs/FINALIZATION_TASK_LIST.md
-src/features/reports/components/ReportGenerationEngine.tsx
-src/pages/Dashboard.tsx
-
-# Recently Modified Files
-These files have been modified since you last accessed them (file was just edited so you may need to re-read it before editing):
-src/pages/Dashboard.tsx
-
-# Current Time
-6/17/2025, 1:46:19 PM (America/Vancouver, UTC-7:00)
-
-# Context Window Usage
-248,999 / 1,048.576K tokens used (24%)
-
-# Current Mode
-ACT MODE
-</environment_details>
