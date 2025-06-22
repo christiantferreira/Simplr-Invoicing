@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { InvoiceProvider } from '@/features/invoices';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
@@ -87,18 +86,6 @@ const AppContent = () => {
     );
   }
 
-  // If user exists but email is not verified, show waiting for verification
-  if (user && !user.email_confirmed_at) {
-    console.log('User exists but email not verified, showing WaitingForVerification');
-    return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>}>
-        <LazyWaitingForVerification />
-      </Suspense>
-    );
-  }
-
   // If user exists but hasn't completed setup, show onboarding
   if (hasCompletedSetup === false) {
     console.log('User exists but setup not completed, showing Onboarding');
@@ -107,6 +94,18 @@ const AppContent = () => {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>}>
         <LazyOnboarding />
+      </Suspense>
+    );
+  }
+
+  // If user exists but email is not verified, show waiting for verification
+  if (user && !user.email_confirmed_at) {
+    console.log('User exists but email not verified, showing WaitingForVerification');
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>}>
+        <LazyWaitingForVerification />
       </Suspense>
     );
   }
