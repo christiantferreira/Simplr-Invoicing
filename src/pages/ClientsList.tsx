@@ -30,14 +30,14 @@ const ClientsList = () => {
 
   const getTotalInvoiced = (clientId: string) => {
     return state.invoices
-      .filter(invoice => invoice.clientId === clientId && invoice.status === 'paid')
+      .filter(invoice => invoice.client_id === clientId && invoice.status === 'paid')
       .reduce((total, invoice) => total + invoice.total, 0);
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-CA', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'CAD',
     }).format(amount);
   };
 

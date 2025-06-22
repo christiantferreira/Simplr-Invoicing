@@ -19,9 +19,9 @@ const Dashboard = () => {
     .slice(0, 5);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-CA', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'CAD',
     }).format(amount);
   };
 
@@ -41,12 +41,6 @@ const Dashboard = () => {
           <p className="text-gray-600">Welcome back! Here's what's happening with your invoices.</p>
         </div>
         <div className="flex space-x-3">
-          <Link to="/clients">
-            <Button variant="outline" className="flex items-center">
-              <Users className="w-4 h-4 mr-2" />
-              Add Client
-            </Button>
-          </Link>
           <Link to="/invoices/new">
             <Button className="flex items-center bg-blue-500 hover:bg-blue-600">
               <Plus className="w-4 h-4 mr-2" />

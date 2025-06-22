@@ -40,8 +40,8 @@ const AppContent = () => {
       try {
         console.log('Fetching settings for user:', user.id);
         const { data, error } = await supabase
-          .from('company_info')
-          .select('is_service_provider') // Assuming this field indicates setup completion
+          .from('settings')
+          .select('has_completed_setup')
           .eq('user_id', user.id)
           .single();
         
@@ -56,8 +56,8 @@ const AppContent = () => {
             console.error('Error fetching settings:', error);
             setHasCompletedSetup(false);
           }
-} else {
-          setHasCompletedSetup(data?.is_service_provider || false);
+        } else {
+          setHasCompletedSetup(data?.has_completed_setup || false);
         }
       } catch (error) {
         console.error('Exception checking setup status:', error);

@@ -17,12 +17,14 @@ interface AddClientModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingClient?: Client | null;
+  onClientAdded?: (newClient: Client) => void;
 }
 
 const AddClientModal: React.FC<AddClientModalProps> = ({
   isOpen,
   onClose,
   editingClient,
+  onClientAdded,
 }) => {
   const { addClient, updateClient } = useInvoice();
   const [formData, setFormData] = useState({
@@ -72,13 +74,16 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
         });
       } else {
         // For add, pass the properties expected by the Client type, using type assertion
-        await addClient({
+        const newClient = await addClient({
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
           company: formData.company,
         } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (newClient && onClientAdded) {
+          onClientAdded(newClient);
+        }
       }
       
       onClose();

@@ -79,6 +79,8 @@ export interface Invoice {
   notes?: string;
   created_at: DateString;
   updated_at: DateString;
+  sent_at?: DateString;
+  paid_at?: DateString;
 }
 
 export interface CreateInvoiceData {

@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
 import { useInvoice, InvoicePreviewPanel } from '@/features/invoices';
 import { useTaxConfigurations } from '@/hooks/useTaxConfigurations';
 import { Invoice, InvoiceItem, Client, TemplateId } from '@/types';
@@ -19,6 +20,7 @@ import { toast } from 'sonner';
 const InvoiceEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { state, addInvoice, updateInvoice, getNextInvoiceNumber } = useInvoice();
   const { getEnabledTaxOptions } = useTaxConfigurations();
   
@@ -27,16 +29,17 @@ const InvoiceEditor = () => {
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState<string>('');
 
   const [invoiceData, setInvoiceData] = useState<Partial<Invoice>>({
-    clientId: '',
+    client_id: '',
     status: 'draft',
-    issueDate: format(new Date(), 'yyyy-MM-dd'),
-    dueDate: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+    issue_date: format(new Date(), 'yyyy-MM-dd'),
+    due_date: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
     items: [
       {
         id: '1',
+        invoice_id: id || '',
         description: '',
         quantity: 1,
-        unitPrice: 0,
+        unit_price: 0,
         total: 0,
       },
     ],
@@ -45,7 +48,6 @@ const InvoiceEditor = () => {
     tax: 0,
     total: 0,
     notes: '',
-    templateId: 'classic',
   });
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -55,9 +57,9 @@ const InvoiceEditor = () => {
   useEffect(() => {
     if (existingInvoice) {
       setInvoiceData(existingInvoice);
-      const client = state.clients.find(c => c.id === existingInvoice.clientId);
+      const client = state.clients.find(c => c.id === existingInvoice.client_id);
       setSelectedClient(client || null);
-      setNextInvoiceNumber(existingInvoice.invoiceNumber);
+      setNextInvoiceNumber(existingInvoice.invoice_number);
     } else {
       // Load next invoice number for new invoices
       getNextInvoiceNumber().then(setNextInvoiceNumber);
@@ -88,8 +90,8 @@ const InvoiceEditor = () => {
     const items = [...(invoiceData.items || [])];
     items[index] = { ...items[index], [field]: value };
     
-    if (field === 'quantity' || field === 'unitPrice') {
-      items[index].total = items[index].quantity * items[index].unitPrice;
+    if (field === 'quantity' || field === 'unit_price') {
+      items[index].total = items[index].quantity * items[index].unit_price;
     }
 
     setInvoiceData(prev => ({ ...prev, items }));
@@ -98,9 +100,10 @@ const InvoiceEditor = () => {
   const addItem = () => {
     const newItem: InvoiceItem = {
       id: Date.now().toString(),
+      invoice_id: id || '',
       description: '',
       quantity: 1,
-      unitPrice: 0,
+      unit_price: 0,
       total: 0,
     };
     setInvoiceData(prev => ({
@@ -116,7 +119,7 @@ const InvoiceEditor = () => {
   };
 
   const handleSaveAs = async (status: 'draft' | 'ready') => {
-    if (!invoiceData.clientId) {
+    if (!invoiceData.client_id) {
       toast.error('Please select a client');
       return;
     }
@@ -128,17 +131,20 @@ const InvoiceEditor = () => {
 
     const invoiceToSave = {
       ...invoiceData,
-      clientId: invoiceData.clientId!,
+      user_id: user!.id,
+      invoice_number: nextInvoiceNumber,
+      client_id: invoiceData.client_id!,
       status: status,
-      issueDate: invoiceData.issueDate!,
-      dueDate: invoiceData.dueDate!,
+      issue_date: invoiceData.issue_date!,
+      due_date: invoiceData.due_date!,
       items: invoiceData.items!,
       subtotal: invoiceData.subtotal!,
       discount: invoiceData.discount!,
       tax: invoiceData.tax!,
       total: invoiceData.total!,
-      templateId: invoiceData.templateId!,
       notes: invoiceData.notes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     try {
@@ -157,7 +163,7 @@ const InvoiceEditor = () => {
   };
 
   const handleSend = async () => {
-    if (!invoiceData.clientId) {
+    if (!invoiceData.client_id) {
       toast.error('Please select a client first');
       return;
     }
@@ -165,7 +171,7 @@ const InvoiceEditor = () => {
     const invoiceToSend = {
       ...invoiceData,
       status: 'sent' as const,
-      sentAt: format(new Date(), 'yyyy-MM-dd'),
+      sent_at: format(new Date(), 'yyyy-MM-dd'),
     };
 
     try {
@@ -174,15 +180,18 @@ const InvoiceEditor = () => {
       } else {
         await addInvoice({
           ...invoiceToSend,
-          clientId: invoiceData.clientId!,
-          issueDate: invoiceData.issueDate!,
-          dueDate: invoiceData.dueDate!,
+          user_id: user!.id,
+          invoice_number: nextInvoiceNumber,
+          client_id: invoiceData.client_id!,
+          issue_date: invoiceData.issue_date!,
+          due_date: invoiceData.due_date!,
           items: invoiceData.items!,
           subtotal: invoiceData.subtotal!,
           discount: invoiceData.discount!,
           tax: invoiceData.tax!,
           total: invoiceData.total!,
-          templateId: invoiceData.templateId!,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         });
       }
 
@@ -196,16 +205,16 @@ const InvoiceEditor = () => {
 
   const handleClientAdded = (newClient: Client) => {
     // Automatically select the newly created client
-    setInvoiceData(prev => ({ ...prev, clientId: newClient.id }));
+    setInvoiceData(prev => ({ ...prev, client_id: newClient.id }));
     setSelectedClient(newClient);
     setIsAddClientModalOpen(false);
     toast.success('Client added successfully');
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-CA', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'CAD',
     }).format(amount);
   };
 
@@ -261,12 +270,12 @@ const InvoiceEditor = () => {
                   <div>
                     <Label htmlFor="client">Client *</Label>
                     <Select
-                      value={invoiceData.clientId}
+                      value={invoiceData.client_id}
                       onValueChange={(value) => {
                         if (value === 'new-client') {
                           setIsAddClientModalOpen(true);
                         } else {
-                          setInvoiceData(prev => ({ ...prev, clientId: value }));
+                          setInvoiceData(prev => ({ ...prev, client_id: value }));
                           const client = state.clients.find(c => c.id === value);
                           setSelectedClient(client || null);
                         }
@@ -291,7 +300,7 @@ const InvoiceEditor = () => {
                     <Label htmlFor="invoiceNumber">Invoice Number</Label>
                     <Input
                       id="invoiceNumber"
-                      value={isEditing ? (existingInvoice?.invoiceNumber || '') : nextInvoiceNumber}
+                      value={isEditing ? (existingInvoice?.invoice_number || '') : nextInvoiceNumber}
                       disabled
                       className="bg-gray-50"
                     />
@@ -304,8 +313,8 @@ const InvoiceEditor = () => {
                     <Input
                       id="issueDate"
                       type="date"
-                      value={invoiceData.issueDate}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, issueDate: e.target.value }))}
+                      value={invoiceData.issue_date}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, issue_date: e.target.value }))}
                     />
                   </div>
                   <div>
@@ -313,8 +322,8 @@ const InvoiceEditor = () => {
                     <Input
                       id="dueDate"
                       type="date"
-                      value={invoiceData.dueDate}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, dueDate: e.target.value }))}
+                      value={invoiceData.due_date}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, due_date: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -322,8 +331,8 @@ const InvoiceEditor = () => {
                 <div>
                   <Label htmlFor="template">Template</Label>
                   <Select
-                    value={invoiceData.templateId}
-                    onValueChange={(value: TemplateId) => setInvoiceData(prev => ({ ...prev, templateId: value }))}
+                    value={invoiceData.notes || ''}
+                    onValueChange={(value: TemplateId) => setInvoiceData(prev => ({ ...prev, notes: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -373,8 +382,8 @@ const InvoiceEditor = () => {
                         <Input
                           type="number"
                           placeholder="Price"
-                          value={item.unitPrice}
-                          onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          value={item.unit_price}
+                          onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
                         />
                       </div>
                       <div className="col-span-2">
@@ -495,6 +504,7 @@ const InvoiceEditor = () => {
       <AddClientModal
         isOpen={isAddClientModalOpen}
         onClose={() => setIsAddClientModalOpen(false)}
+        onClientAdded={handleClientAdded}
       />
     </div>
   );

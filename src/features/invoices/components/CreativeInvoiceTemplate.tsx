@@ -45,8 +45,8 @@ const CreativeInvoiceTemplate: React.FC<CreativeInvoiceTemplateProps> = ({ invoi
             <tr key={item.id}>
               <td className="p-2 border-b border-gray-200">{item.description}</td>
               <td className="p-2 text-right border-b border-gray-200">{item.quantity}</td>
-              <td className="p-2 text-right border-b border-gray-200">${item.unit_price.toFixed(2)}</td>
-              <td className="p-2 text-right border-b border-gray-200">${item.total.toFixed(2)}</td>
+              <td className="p-2 text-right border-b border-gray-200">CAD ${item.unit_price.toFixed(2)}</td>
+              <td className="p-2 text-right border-b border-gray-200">CAD ${item.total.toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
@@ -56,19 +56,19 @@ const CreativeInvoiceTemplate: React.FC<CreativeInvoiceTemplateProps> = ({ invoi
         <div className="w-1/3">
           <div className="flex justify-between text-gray-600">
             <p>Subtotal</p>
-            <p>${invoice.subtotal.toFixed(2)}</p>
+            <p>CAD ${invoice.subtotal.toFixed(2)}</p>
           </div>
           <div className="flex justify-between text-gray-600">
             <p>Discount</p>
-            <p>-${invoice.discount.toFixed(2)}</p>
+            <p>-CAD ${invoice.discount.toFixed(2)}</p>
           </div>
           <div className="flex justify-between text-gray-600">
             <p>Tax</p>
-            <p>${invoice.tax.toFixed(2)}</p>
+            <p>CAD ${invoice.tax.toFixed(2)}</p>
           </div>
           <div className="flex justify-between font-bold text-xl mt-2 pt-2 border-t-2" style={{ borderColor: companySettings.primaryColor }}>
             <p>Total</p>
-            <p>${invoice.total.toFixed(2)}</p>
+            <p>CAD ${invoice.total.toFixed(2)}</p>
           </div>
         </div>
       </section>

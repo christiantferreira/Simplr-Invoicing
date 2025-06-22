@@ -19,15 +19,14 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        window.location.href = '/';
+        navigate('/');
       }
-    };
-    checkUser();
-  }, []);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -118,7 +117,7 @@ const Auth = () => {
 
       if (data.session) {
         toast.success('Signed in successfully!');
-        window.location.href = '/';
+        navigate('/');
       }
     } catch (error: unknown) {
       toast.error('An unexpected error occurred');
@@ -145,7 +144,7 @@ const Auth = () => {
             <CardDescription>Sign in to your account or create a new one</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
+            <Tabs defaultValue="signin" className="w-full" onValueChange={(value) => console.log(value)}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
