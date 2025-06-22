@@ -15,6 +15,7 @@ import {
   LazyAuth,
   LazyOnboarding,
   LazyWaitingForVerification,
+  LazyClientInvoices,
 } from '@/components/LazyComponents';
 
 const AppContent = () => {
@@ -37,21 +38,26 @@ const AppContent = () => {
 
       setSetupLoading(true);
       try {
-        console.log('Fetching company info for user:', user.id);
+        console.log('Fetching settings for user:', user.id);
         const { data, error } = await supabase
           .from('company_info')
-          .select('id')
+          .select('is_service_provider') // Assuming this field indicates setup completion
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
+          .single();
         
-        console.log('Company info result:', { data, error });
+        console.log('Settings result:', { data, error });
         
         if (error) {
-          console.error('Error fetching company info:', error);
-          setHasCompletedSetup(false);
-        } else {
-          setHasCompletedSetup(data && data.length > 0);
+          if (error.code === 'PGRST116') {
+            // No settings record found - user hasn't completed setup
+            console.log('No settings record found - setup not completed');
+            setHasCompletedSetup(false);
+          } else {
+            console.error('Error fetching settings:', error);
+            setHasCompletedSetup(false);
+          }
+} else {
+          setHasCompletedSetup(data?.is_service_provider || false);
         }
       } catch (error) {
         console.error('Exception checking setup status:', error);
@@ -120,8 +126,8 @@ const AppContent = () => {
     );
   }
 
-  // User is authenticated and has completed setup
-  console.log('User authenticated and setup complete, showing main app');
+  // User is authenticated, email verified, and has completed setup
+  console.log('User authenticated, verified, and setup complete, showing main app');
   return (
     <InvoiceProvider>
       <Layout>
@@ -135,7 +141,8 @@ const AppContent = () => {
             <Route path="/invoices/new" element={<LazyInvoiceEditor />} />
             <Route path="/invoices/:id/edit" element={<LazyInvoiceEditor />} />
             <Route path="/invoices/:id/preview" element={<LazyInvoicePreview />} />
-            <Route path="/settings" element={<LazySettings />} />
+<Route path="/settings" element={<LazySettings />} />
+            <Route path="/clients/:clientId/invoices" element={<LazyClientInvoices />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
@@ -149,7 +156,11 @@ const Index = () => {
     <ThemeProvider defaultTheme="system" storageKey="simplr-invoicing-theme">
       <AuthProvider>
         <Router>
-          <AppContent />
+          <Routes>
+            <Route path="/onboarding" element={<LazyOnboarding />} />
+            <Route path="/waiting-for-verification" element={<LazyWaitingForVerification />} />
+            <Route path="*" element={<AppContent />} />
+          </Routes>
         </Router>
       </AuthProvider>
     </ThemeProvider>

@@ -22,9 +22,11 @@
     "noFallthroughCasesInSwitch": true,
 
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+"paths": {
+      "@/*": ["./src/*"],
+      "components/*": ["./src/components/*"]
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src"]
 }

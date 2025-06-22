@@ -1,22 +1,27 @@
 import React, { useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useLocation, useNavigate } from 'react-router-dom';
 import OnboardingWizard from '@/components/OnboardingWizard';
 
 const Onboarding = () => {
-  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const user = location.state?.user;
 
   useEffect(() => {
-    // Redirect to auth if no user
     if (!user) {
-      window.location.href = '/auth';
+      navigate('/auth', { replace: true });
     }
-  }, [user]);
+  }, [user, navigate]);
 
   if (!user) {
-    return null;
+    return null; // Redirecting, so no need to render anything
   }
 
-  return <OnboardingWizard />;
+  return (
+    <div className="min-h-screen bg-background">
+      <OnboardingWizard user={user} />
+    </div>
+  );
 };
 
 export default Onboarding;

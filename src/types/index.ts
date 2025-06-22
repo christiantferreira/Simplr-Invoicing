@@ -23,12 +23,13 @@ export interface CompanySettings {
 // Client Management
 export interface Client {
   id: UUID;
+  user_id: UUID;
   name: string;
   email: EmailAddress;
   phone?: PhoneNumber;
   address?: string;
   company?: string;
-  createdAt: DateString;
+  created_at: DateString;
 }
 
 export interface CreateClientData {
@@ -44,9 +45,10 @@ export interface CreateClientData {
 // Invoice Items
 export interface InvoiceItem {
   id: UUID;
+  invoice_id: UUID;
   description: string;
   quantity: number;
-  unitPrice: CurrencyAmount;
+  unit_price: CurrencyAmount;
   total: CurrencyAmount;
 }
 
@@ -63,22 +65,20 @@ export type TemplateId = 'classic' | 'modern' | 'creative' | 'professional';
 // Invoice Management
 export interface Invoice {
   id: UUID;
-  invoiceNumber: string;
-  clientId: UUID;
+  user_id: UUID;
+  client_id: UUID;
+  invoice_number: string;
   status: InvoiceStatus;
-  issueDate: DateString;
-  dueDate: DateString;
-  items: InvoiceItem[];
+  issue_date: DateString;
+  due_date: DateString;
+  items?: InvoiceItem[];
   subtotal: CurrencyAmount;
   discount: CurrencyAmount;
   tax: CurrencyAmount;
   total: CurrencyAmount;
   notes?: string;
-  templateId: TemplateId;
-  createdAt: DateString;
-  updatedAt: DateString;
-  sentAt?: DateString;
-  paidAt?: DateString;
+  created_at: DateString;
+  updated_at: DateString;
 }
 
 export interface CreateInvoiceData {
@@ -106,11 +106,11 @@ export interface DashboardStats {
 // Tax Configuration
 export interface TaxConfiguration {
   id: UUID;
-  userId: UUID;
-  provinceCode: string;
-  taxName: string;
-  taxRate: number;
-  isEnabled: boolean;
+  user_id: UUID;
+  province_code: string;
+  tax_name: string;
+  tax_rate: number;
+  is_enabled: boolean;
 }
 
 export interface TaxOption {

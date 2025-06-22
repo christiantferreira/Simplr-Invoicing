@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +12,7 @@ import { Loader2 } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 
 const Auth = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,15 +80,16 @@ const Auth = () => {
         return;
       }
 
-      if (data.user && !data.session) {
-        toast.success('Please check your email to confirm your account!');
-        // Redirect to onboarding after signup
-        window.location.href = '/onboarding';
-      } else if (data.session) {
-        toast.success('Account created successfully!');
-        window.location.href = '/onboarding';
+      if (data.user) {
+        if (!data.session) {
+          toast.success('Please check your email to confirm your account!');
+        } else {
+          toast.success('Account created successfully!');
+        }
+        // Navigate to onboarding with user state
+        navigate('/onboarding', { state: { user: data.user } });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('An unexpected error occurred');
       console.error('Sign up error:', error);
     } finally {
@@ -117,7 +120,7 @@ const Auth = () => {
         toast.success('Signed in successfully!');
         window.location.href = '/';
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('An unexpected error occurred');
       console.error('Sign in error:', error);
     } finally {
