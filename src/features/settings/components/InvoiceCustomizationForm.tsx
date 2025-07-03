@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ interface InvoiceCustomizationFormProps {
 }
 
 const InvoiceCustomizationForm: React.FC<InvoiceCustomizationFormProps> = ({ defaultTemplate, onSubmit }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<InvoiceCustomizationFormData>({
+  const { control, handleSubmit, formState: { errors } } = useForm<InvoiceCustomizationFormData>({
     resolver: zodResolver(invoiceCustomizationSchema),
     defaultValues: {
       defaultTemplate,
@@ -36,17 +36,23 @@ const InvoiceCustomizationForm: React.FC<InvoiceCustomizationFormProps> = ({ def
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label htmlFor="defaultTemplate">Default Template</Label>
-            <Select onValueChange={(value) => console.log(value)} defaultValue={defaultTemplate}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a template" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="classic">Classic</SelectItem>
-                <SelectItem value="modern">Modern</SelectItem>
-                <SelectItem value="creative">Creative</SelectItem>
-                <SelectItem value="professional">Professional</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="defaultTemplate"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="classic">Classic</SelectItem>
+                    <SelectItem value="modern">Modern</SelectItem>
+                    <SelectItem value="creative">Creative</SelectItem>
+                    <SelectItem value="professional">Professional</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
           <Button type="submit">Save</Button>
         </form>

@@ -47,15 +47,15 @@ const InvoicesList = () => {
   };
 
   const filteredInvoices = state.invoices.filter(invoice => {
-    const client = state.clients.find(c => c.id === invoice.clientId);
+    const client = state.clients.find(c => c.id === invoice.client_id);
     const matchesSearch = 
-      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client?.name.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (activeTab === 'all') return matchesSearch;
     if (activeTab === 'pending') {
       // Pending invoices are those that are sent but not paid and not overdue
-      const dueDate = new Date(invoice.dueDate);
+      const dueDate = new Date(invoice.due_date);
       const today = new Date();
       return matchesSearch && 
              (invoice.status === 'sent' || invoice.status === 'viewed') && 
@@ -63,7 +63,7 @@ const InvoicesList = () => {
     }
     if (activeTab === 'overdue') {
       // Overdue invoices are past due date and not paid
-      const dueDate = new Date(invoice.dueDate);
+      const dueDate = new Date(invoice.due_date);
       const today = new Date();
       return matchesSearch && 
              invoice.status !== 'paid' && 
@@ -73,9 +73,9 @@ const InvoicesList = () => {
   });
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-CA', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'CAD',
     }).format(amount);
   };
 
@@ -85,8 +85,8 @@ const InvoicesList = () => {
       const updatedInvoice = {
         ...invoice,
         status: newStatus,
-        ...(newStatus === 'paid' && { paidAt: format(new Date(), 'yyyy-MM-dd') }),
-        ...(newStatus === 'sent' && !invoice.sentAt && { sentAt: format(new Date(), 'yyyy-MM-dd') }),
+        ...(newStatus === 'paid' && { paid_at: format(new Date(), 'yyyy-MM-dd') }),
+        ...(newStatus === 'sent' && !invoice.sent_at && { sent_at: format(new Date(), 'yyyy-MM-dd') }),
       };
       updateInvoice(updatedInvoice);
     }
@@ -232,7 +232,7 @@ const InvoicesList = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredInvoices.map((invoice) => {
-                      const client = state.clients.find(c => c.id === invoice.clientId);
+                      const client = state.clients.find(c => c.id === invoice.client_id);
                       return (
                         <TableRow key={invoice.id}>
                           <TableCell>
@@ -240,7 +240,7 @@ const InvoicesList = () => {
                               to={`/invoices/${invoice.id}/preview`}
                               className="font-medium text-blue-600 hover:text-blue-800"
                             >
-                              {invoice.invoiceNumber}
+                              {invoice.invoice_number}
                             </Link>
                           </TableCell>
                           <TableCell>
@@ -250,10 +250,10 @@ const InvoicesList = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {format(new Date(invoice.issueDate), 'MMM d, yyyy')}
+                            {format(new Date(invoice.issue_date), 'MMM d, yyyy')}
                           </TableCell>
                           <TableCell>
-                            {format(new Date(invoice.dueDate), 'MMM d, yyyy')}
+                            {format(new Date(invoice.due_date), 'MMM d, yyyy')}
                           </TableCell>
                           <TableCell>
                             <span className="font-medium">{formatCurrency(invoice.total)}</span>

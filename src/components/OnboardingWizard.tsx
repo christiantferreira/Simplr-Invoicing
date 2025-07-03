@@ -207,7 +207,7 @@ const OnboardingWizard = ({ user }: OnboardingWizardProps) => {
       
       // Set timer for redirect after 5 seconds
       setTimeout(() => {
-        window.location.href = '/auth';
+        window.location.href = '/';
       }, 5000);
 
       toast.success('Onboarding completed successfully!');
