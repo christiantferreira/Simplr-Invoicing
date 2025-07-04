@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS clients (
     created_at timestamp with time zone DEFAULT now()
 );
 
+CREATE INDEX IF NOT EXISTS idx_clients_user_id ON public.clients(user_id);
+
 -- Enable RLS on clients table
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 
@@ -25,7 +27,7 @@ CREATE POLICY "Users can manage their own clients" ON clients
 CREATE TABLE IF NOT EXISTS invoices (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
-    client_id uuid REFERENCES clients(id) ON DELETE SET NULL,
+    client_id uuid REFERENCES clients(id) ON DELETE CASCADE,
     invoice_number text NOT NULL,
     status text NOT NULL DEFAULT 'draft',
     issue_date date NOT NULL,
@@ -36,7 +38,8 @@ CREATE TABLE IF NOT EXISTS invoices (
     total numeric(10, 2) NOT NULL,
     notes text,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT invoices_user_id_invoice_number_key UNIQUE (user_id, invoice_number)
 );
 
 -- Enable RLS on invoices table
@@ -166,7 +169,7 @@ CREATE TRIGGER update_settings_updated_at
 CREATE TABLE IF NOT EXISTS recurring_invoices (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
-    client_id uuid REFERENCES clients(id) ON DELETE SET NULL,
+    client_id uuid REFERENCES clients(id) ON DELETE CASCADE,
     template_invoice_id uuid REFERENCES invoices(id) ON DELETE SET NULL,
     frequency text NOT NULL, -- e.g., 'weekly', 'monthly'
     start_date date NOT NULL,
@@ -210,7 +213,7 @@ CREATE INDEX IF NOT EXISTS idx_invoices_issue_date ON invoices (issue_date);
 CREATE INDEX IF NOT EXISTS idx_clients_user_id ON clients (user_id);
 CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice_id ON invoice_items (invoice_id);
 CREATE INDEX IF NOT EXISTS idx_recurring_invoices_user_id ON recurring_invoices (user_id);
-CREATE INDEX IF NOT EXISTS idx_recurring_invoices_next_generation_date ON recurring_invoices (next_generation_date);
+CREATE INDEX IF NOT EXISTS idx_recurring_invoices_next_generation_date ON recurring_invoices (next_generation_date, is_active);
 CREATE INDEX IF NOT EXISTS idx_tax_configurations_user_id ON tax_configurations (user_id);
 
 -- Add additional constraints to existing tables if needed
@@ -254,7 +257,8 @@ CREATE TABLE IF NOT EXISTS report_parameters (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     report_id uuid REFERENCES reports(id) ON DELETE CASCADE,
     parameter_name text NOT NULL,
-    parameter_value text NOT NULL
+    parameter_value text NOT NULL,
+    user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE
 );
 
 -- Enable RLS on report_parameters table
@@ -355,7 +359,7 @@ CREATE TABLE IF NOT EXISTS client_performance_report_data (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
     report_id uuid REFERENCES reports(id) ON DELETE CASCADE,
-    client_id uuid,
+    client_id uuid REFERENCES clients(id) ON DELETE CASCADE,
     client_name text,
     total_revenue numeric
 );
@@ -717,6 +721,30 @@ $$ LANGUAGE plpgsql;
 
 
 -- Migration: 20250616_create_utility_tables.sql
+
+-- Create payments table
+CREATE TABLE IF NOT EXISTS public.payments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  invoice_id uuid NOT NULL REFERENCES public.invoices(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  amount numeric NOT NULL CHECK (amount > 0::numeric),
+  payment_date date NOT NULL DEFAULT now(),
+  payment_method text,
+  transaction_id text,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT payments_pkey PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_invoice_id ON public.payments(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON public.payments(user_id);
+
+-- Enable RLS on payments table
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policy for payments table
+CREATE POLICY "Users can manage their own payments" ON public.payments
+    FOR ALL USING (auth.uid() = user_id);
 -- Create reports_cache table
 CREATE TABLE IF NOT EXISTS reports_cache (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

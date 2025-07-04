@@ -10,6 +10,7 @@ import { ArrowLeft, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BrandLogo } from '@/components/BrandLogo';
+import { User } from '@supabase/supabase-js';
 import {
   CANADIAN_PROVINCES,
   ADDRESS_EXTRA_TYPES,
@@ -47,15 +48,8 @@ interface OnboardingData {
   gst_number: string;
 }
 
-interface SupabaseUser {
-  id: string;
-  email?: string;
-  // Add other potential properties if needed, or use a more specific type if available
-  [key: string]: unknown;
-}
-
 interface OnboardingWizardProps {
-  user: SupabaseUser;
+  user: User;
 }
 
 const OnboardingWizard = ({ user }: OnboardingWizardProps) => {

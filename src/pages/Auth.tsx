@@ -80,13 +80,8 @@ const Auth = () => {
       }
 
       if (data.user) {
-        if (!data.session) {
-          toast.success('Please check your email to confirm your account!');
-        } else {
-          toast.success('Account created successfully!');
-        }
-        // Navigate to onboarding with user state
-        navigate('/onboarding', { state: { user: data.user } });
+        toast.success('Account created! Please check your email to verify your account.');
+        navigate('/waiting-for-verification');
       }
     } catch (error: unknown) {
       toast.error('An unexpected error occurred');
