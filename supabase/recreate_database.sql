@@ -23,6 +23,9 @@ ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own clients" ON clients
     FOR ALL USING (auth.uid() = user_id);
 
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.clients TO authenticated;
+
 -- Create invoices table
 CREATE TABLE IF NOT EXISTS invoices (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -49,6 +52,9 @@ ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own invoices" ON invoices
     FOR ALL USING (auth.uid() = user_id);
 
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.invoices TO authenticated;
+
 -- Create invoice_items table
 CREATE TABLE IF NOT EXISTS invoice_items (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -65,6 +71,9 @@ ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 -- Create RLS policy for invoice_items table
 CREATE POLICY "Users can manage their own invoice items" ON invoice_items
     FOR ALL USING (EXISTS (SELECT 1 FROM invoices WHERE invoices.id = invoice_items.invoice_id AND invoices.user_id = auth.uid()));
+
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.invoice_items TO authenticated;
 
 -- Migration: 20250606_create_gmail_tokens_table.sql
 -- Create gmail_tokens table for secure token storage
@@ -146,16 +155,24 @@ CREATE TABLE IF NOT EXISTS other_service_types_log (
 -- Enable RLS on settings table
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.settings TO authenticated;
+
 -- Enable RLS on other_service_types_log table
 ALTER TABLE other_service_types_log ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policy for settings
-CREATE POLICY "Users can manage their own settings" ON settings
-    FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage their own settings" ON public.settings
+    FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
 
 -- Create RLS policy for other_service_types_log
 CREATE POLICY "Users can manage their own service logs" ON other_service_types_log
     FOR ALL USING (auth.uid() = user_id);
+
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.other_service_types_log TO authenticated;
 
 -- Create updated_at trigger for settings
 CREATE TRIGGER update_settings_updated_at 
@@ -187,6 +204,9 @@ ALTER TABLE recurring_invoices ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own recurring invoices" ON recurring_invoices
     FOR ALL USING (auth.uid() = user_id);
 
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.recurring_invoices TO authenticated;
+
 -- Create tax_configurations table if not already fully defined
 CREATE TABLE IF NOT EXISTS tax_configurations (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -204,6 +224,9 @@ ALTER TABLE tax_configurations ENABLE ROW LEVEL SECURITY;
 -- Create RLS policy for tax_configurations table
 CREATE POLICY "Users can manage their own tax configurations" ON tax_configurations
     FOR ALL USING (auth.uid() = user_id);
+
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.tax_configurations TO authenticated;
 
 -- Add indexes for performance optimization on frequently queried fields
 CREATE INDEX IF NOT EXISTS idx_invoices_user_id ON invoices (user_id);
@@ -252,6 +275,9 @@ ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own reports" ON reports
     FOR ALL USING (auth.uid() = user_id);
 
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.reports TO authenticated;
+
 -- Create report_parameters table
 CREATE TABLE IF NOT EXISTS report_parameters (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -267,6 +293,9 @@ ALTER TABLE report_parameters ENABLE ROW LEVEL SECURITY;
 -- Create RLS policy for report_parameters table
 CREATE POLICY "Users can manage their own report parameters" ON report_parameters
     FOR ALL USING (auth.uid() = user_id);
+
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.report_parameters TO authenticated;
 
 -- Create revenue_report_data table
 CREATE TABLE IF NOT EXISTS revenue_report_data (
@@ -284,6 +313,9 @@ ALTER TABLE revenue_report_data ENABLE ROW LEVEL SECURITY;
 -- Create RLS policy for revenue_report_data table
 CREATE POLICY "Users can manage their own revenue_report_data" ON revenue_report_data
     FOR ALL USING (auth.uid() = user_id);
+
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.revenue_report_data TO authenticated;
 
 -- Function to calculate revenue report
 CREATE OR REPLACE FUNCTION calculate_revenue_report(user_id uuid, start_date date, end_date date)
@@ -328,6 +360,9 @@ ALTER TABLE tax_summary_report_data ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own tax_summary_report_data" ON tax_summary_report_data
     FOR ALL USING (auth.uid() = user_id);
 
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.tax_summary_report_data TO authenticated;
+
 -- Function to calculate tax summary report
 CREATE OR REPLACE FUNCTION calculate_tax_summary_report(user_id uuid, start_date date, end_date date)
 RETURNS TABLE (province text, gst_hst_collected numeric) AS $$
@@ -370,6 +405,9 @@ ALTER TABLE client_performance_report_data ENABLE ROW LEVEL SECURITY;
 -- Create RLS policy for client_performance_report_data table
 CREATE POLICY "Users can manage their own client_performance_report_data" ON client_performance_report_data
     FOR ALL USING (auth.uid() = user_id);
+
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.client_performance_report_data TO authenticated;
 
 -- Function to calculate client performance report
 CREATE OR REPLACE FUNCTION calculate_client_performance_report(user_id uuid, start_date date, end_date date)
@@ -418,6 +456,9 @@ ALTER TABLE invoice_status_report_data ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own invoice_status_report_data" ON invoice_status_report_data
     FOR ALL USING (auth.uid() = user_id);
 
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.invoice_status_report_data TO authenticated;
+
 -- Function to calculate invoice status overview report
 CREATE OR REPLACE FUNCTION calculate_invoice_status_overview_report(user_id uuid, start_date date, end_date date)
 RETURNS TABLE (status text, invoice_count bigint, total_value numeric) AS $$
@@ -462,6 +503,9 @@ ALTER TABLE aging_report_data ENABLE ROW LEVEL SECURITY;
 -- Create RLS policy for aging_report_data table
 CREATE POLICY "Users can manage their own aging_report_data" ON aging_report_data
     FOR ALL USING (auth.uid() = user_id);
+
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.aging_report_data TO authenticated;
 
 -- Function to calculate aging report
 CREATE OR REPLACE FUNCTION calculate_aging_report(user_id uuid, start_date date, end_date date)
@@ -745,6 +789,9 @@ ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 -- Create RLS policy for payments table
 CREATE POLICY "Users can manage their own payments" ON public.payments
     FOR ALL USING (auth.uid() = user_id);
+
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.payments TO authenticated;
 -- Create reports_cache table
 CREATE TABLE IF NOT EXISTS reports_cache (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -763,6 +810,9 @@ ALTER TABLE reports_cache ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own reports cache" ON reports_cache
     FOR ALL USING (auth.uid() = user_id);
 
+-- Grant permissions for authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.reports_cache TO authenticated;
+
 -- Create activity_log table
 CREATE TABLE IF NOT EXISTS activity_log (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -778,6 +828,9 @@ ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
 -- Create RLS policy for activity_log table
 CREATE POLICY "Users can view their own activity logs" ON activity_log
     FOR SELECT USING (auth.uid() = user_id);
+
+-- Grant permissions for authenticated users
+GRANT SELECT ON TABLE public.activity_log TO authenticated;
 
 
 -- Migration: 20250616_setup_storage_buckets.sql

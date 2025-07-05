@@ -77,6 +77,32 @@ Self-employed professionals and small service businesses in Canada struggle with
 - **Edge Functions:** Supabase Edge Functions for server-side logic
 - **Row Level Security:** Built-in security and multi-tenancy
 
+### 5.4 Supabase Security Best Practices
+
+**Onboarding Flow RLS Issue:**
+- **Problem:** New users were unable to complete the onboarding process due to a "permission denied for table settings" error. This occurred because the Row Level Security (RLS) policies were too restrictive, and the underlying table-level `GRANT` privileges for the `authenticated` role were missing.
+- **Solution:** The fix involves two parts:
+    1.  **Granting Table Permissions:** The `authenticated` role must be explicitly granted `SELECT, INSERT, UPDATE, DELETE` permissions on the `public.settings` table.
+    2.  **Implementing a Robust RLS Policy:** A single, comprehensive `FOR ALL` policy should be used on the `settings` table. This policy uses both `USING` (for read/update/delete operations) and `WITH CHECK` (for write operations) clauses to ensure users can only manage their own records.
+
+- **Implementation Code:**
+  ```sql
+  -- 1. Grant base permissions to the authenticated role
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.settings TO authenticated;
+
+  -- 2. Drop any conflicting policies
+  DROP POLICY IF EXISTS "Users can manage their own settings" ON public.settings;
+  -- (Include any other policy names that might exist)
+
+  -- 3. Create the single, correct RLS policy
+  CREATE POLICY "Users can manage their own settings"
+  ON public.settings
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+  ```
+- **Note:** This pattern should be reviewed for all tables that new users need to interact with immediately upon signing up.
+
 ### 5.2 Complete Data Architecture in Supabase
 - **Users Table:** Business profiles, settings, authentication
 - **Clients Table:** Customer information and relationships

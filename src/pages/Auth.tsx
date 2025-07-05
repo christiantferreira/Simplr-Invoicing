@@ -13,6 +13,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('signin');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,6 +60,24 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Step 1: Check if the email already exists using the RPC function
+      const { data: emailExists, error: rpcError } = await supabase.rpc('email_exists', {
+        email_to_check: email,
+      });
+
+      if (rpcError) {
+        toast.error('Could not verify email. Please try again.');
+        console.error('RPC error:', rpcError);
+        return;
+      }
+
+      if (emailExists) {
+        toast.error('This email is already registered. Please sign in instead.');
+        setActiveTab('signin');
+        return;
+      }
+
+      // Step 2: If email does not exist, proceed with sign up
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -66,16 +85,12 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: fullName,
-          }
-        }
+          },
+        },
       });
 
       if (error) {
-        if (error.message.includes('already registered')) {
-          toast.error('This email is already registered. Please sign in instead.');
-        } else {
-          toast.error(error.message);
-        }
+        toast.error(error.message);
         return;
       }
 
@@ -103,7 +118,16 @@ const Auth = () => {
 
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          toast.error('Invalid email or password. Please try again.');
+          const { data: emailExists } = await supabase.rpc('email_exists', {
+            email_to_check: email,
+          });
+
+          if (emailExists) {
+            toast.error('Invalid password. Please try again.');
+          } else {
+            toast.error('Account not found. Please create an account.');
+            setActiveTab('signup');
+          }
         } else {
           toast.error(error.message);
         }
@@ -139,7 +163,7 @@ const Auth = () => {
             <CardDescription>Sign in to your account or create a new one</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full" onValueChange={(value) => console.log(value)}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
