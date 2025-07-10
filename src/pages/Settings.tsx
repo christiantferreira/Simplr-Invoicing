@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useInvoice } from '@/features/invoices';
@@ -754,6 +755,24 @@ const Settings = () => {
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Appearance */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div>
+                <h3 className="text-lg font-medium">Theme</h3>
+                <p className="text-sm text-muted-foreground">
+                  Select the theme for the dashboard.
+                </p>
+              </div>
+              <ThemeToggle />
+            </div>
           </CardContent>
         </Card>
 
