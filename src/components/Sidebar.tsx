@@ -41,11 +41,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <div
         className={cn(
           'fixed top-16 left-0 h-full w-72 bg-simplr-primary border-r border-simplr-accent transform transition-transform duration-200 ease-in-out z-50',
-          'lg:translate-x-0 lg:static lg:z-auto',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex items-center justify-between p-4 lg:hidden">
+        <div className="flex items-center justify-between p-4">
           <span className="font-semibold text-simplr-on-dark">Menu</span>
           <Button variant="ghost" size="icon" onClick={onClose} className="text-simplr-on-dark hover:bg-simplr-accent">
             <X className="h-5 w-5" />

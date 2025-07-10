@@ -16,7 +16,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 lg:ml-64 pt-16">
+        <main className={`flex-1 pt-16 transition-all duration-200 ease-in-out ${sidebarOpen ? 'ml-72' : 'ml-0'}`}>
           <div className="p-6">
             {children}
           </div>

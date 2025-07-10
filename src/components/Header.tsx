@@ -36,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="lg:hidden text-simplr-on-dark hover:bg-simplr-accent"
+          className="text-simplr-on-dark hover:bg-simplr-accent"
         >
           <Menu className="h-5 w-5" />
         </Button>
