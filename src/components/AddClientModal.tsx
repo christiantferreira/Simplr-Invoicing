@@ -158,7 +158,7 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
                 onChange={(e) => handleChange('hasGST', e.target.checked)}
                 className="rounded border-gray-300 text-simplr-accent focus:ring-simplr-accent"
               />
-              <Label htmlFor="hasGST">Does your business have a GST Number?</Label>
+              <Label htmlFor="hasGST">do they have a gst number?</Label>
             </div>
             
             {formData.hasGST && (
