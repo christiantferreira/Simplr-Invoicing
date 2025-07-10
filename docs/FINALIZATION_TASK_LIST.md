@@ -1,6 +1,6 @@
 # Simplr Invoicing - Finalization Task List
 
-This document outlines the pending tasks for the finalization sprint of the Simplr Invoicing project, focusing on items marked as "Parcial" (Partially Implemented) or "Ausente/Errado" (Absent/Wrong) as per the technical review. Tasks are organized by functional area to facilitate systematic completion.
+This document outlines the pending tasks for the finalization sprint of the Simplr Invoicing project, focusing on items marked as "Em Andamento" (In Progress) as per the technical review. Tasks are organized by functional area to facilitate systematic completion.
 
 ## Area: Supabase Database Design & Implementation
 - **Task 2.1: Complete Database Schema with Relationships and Constraints** ✅ *Conforme*: Schema completed with relationships, constraints, and indexes.
@@ -27,86 +27,86 @@ This document outlines the pending tasks for the finalization sprint of the Simp
   - Test file handling workflows to ensure reliability.
 
 ## Area: Frontend-Supabase Integration
-- **Task 3.3: Enhance Data Fetching Hooks and Real-Time Subscriptions** (Parcial)
+- **Task 3.3: Enhance Data Fetching Hooks and Real-Time Subscriptions** (Em Andamento)
   - ✅ Expand real-time subscriptions using Supabase Realtime for live updates on invoices and clients.
   - ⚠️ Implement optimistic updates for better user experience during data mutations.
   - ⚠️ Add data pagination and infinite scrolling for large datasets in lists (e.g., invoice and client lists).
   - ⚠️ Develop conflict resolution mechanisms for concurrent edits.
-- **Task 3.5: Implement Comprehensive Error Handling and Offline Sync Strategies** (Parcial)
+- **Task 3.5: Implement Comprehensive Error Handling and Offline Sync Strategies** (Em Andamento)
   - Create a global error boundary to handle unexpected errors gracefully.
   - Implement retry mechanisms with exponential backoff for failed API calls.
   - Develop offline detection and queue management for actions performed without connectivity.
   - Add user feedback mechanisms for all error and loading states to improve UX.
 
 ## Area: Invoice Management & Status Tracking
-- **Task 6.2: Enhance Dashboard with Invoice Overview and Analytics** (Parcial)
+- **Task 6.2: Enhance Dashboard with Invoice Overview and Analytics** (Em Andamento)
   - Add visual charts for invoice status distribution and revenue trends on the dashboard (`src/pages/Dashboard.tsx`).
   - Implement key performance indicators (KPIs) such as average payment time and outstanding amounts.
-- **Task 6.3: Implement Invoice Bulk Operations** (Parcial)
+- **Task 6.3: Implement Invoice Bulk Operations** (Em Andamento)
   - Add bulk actions for invoices in `src/pages/InvoicesList.tsx` (e.g., bulk delete, bulk status update).
   - Develop bulk export functionality for selected invoices.
-- **Task 6.4: Add Invoice Version Control** (Parcial)
+- **Task 6.4: Add Invoice Version Control** (Em Andamento)
   - Implement version history for invoices to track changes over time in `src/pages/InvoiceEditor.tsx`.
   - Create a UI to view and revert to previous versions of an invoice.
-- **Task 6.5: Implement Recurring Invoice Functionality** (Ausente/Errado)
+- **Task 6.5: Implement Recurring Invoice Functionality** (Em Andamento)
   - Develop a system for creating recurring invoice templates with customizable intervals (weekly, monthly).
   - Automate generation of recurring invoices based on user-defined schedules.
   - Add UI for managing recurring invoices in `src/pages/InvoicesList.tsx` or a dedicated section.
   - Implement notifications for upcoming recurring invoices.
 
 ## Area: Client Management System
-- **Task 5.4: Enhance Client History and Invoice Relationship Tracking** (Parcial)
+- **Task 5.4: Enhance Client History and Invoice Relationship Tracking** (Em Andamento)
   - Develop a detailed client history view in `src/pages/ClientInvoices.tsx` showing all interactions and transactions.
   - Add metrics like total invoiced amount, payment behavior, and last invoice date to client profiles.
-- **Task 5.5: Build Contact Import and Bulk Operations** (Ausente/Errado)
+- **Task 5.5: Build Contact Import and Bulk Operations** (Em Andamento)
   - Create an import feature for clients using CSV or other standard formats in `src/pages/ClientsList.tsx`.
   - Implement bulk operations for client management (e.g., bulk edit, delete, or categorization).
   - Add validation and error reporting for bulk operations to ensure data integrity.
 
 ## Area: PDF Generation & Sharing System
-- **Task 7.4: Enhance Sharing Functionality (Download, Print, Share)** (Parcial)
+- **Task 7.4: Enhance Sharing Functionality (Download, Print, Share)** (Em Andamento)
   - Optimize PDF output for print-friendly formats in `src/features/invoices/utils/pdfGenerator.ts`.
   - Add direct sharing options (e.g., share via link or social media) from `src/pages/InvoicePreview.tsx`.
-- **Task 7.5: Create Invoice Delivery Tracking and Confirmations** (Ausente/Errado)
+- **Task 7.5: Create Invoice Delivery Tracking and Confirmations** (Em Andamento)
   - Implement tracking for sent invoices to confirm delivery and view status (e.g., email opened, invoice viewed).
   - Develop a confirmation system to notify users when an invoice is paid or disputed.
   - Add a UI component in `src/pages/InvoicesList.tsx` to display delivery status.
 
 ## Area: Settings & Configuration Management
-- **Task 8.4: Add Notification Preferences and Email Settings** (Ausente/Errado)
+- **Task 8.4: Add Notification Preferences and Email Settings** (Em Andamento)
   - Create a settings section in `src/pages/Settings.tsx` for users to configure notification preferences (e.g., email, in-app).
   - Implement email settings for invoice sending (e.g., custom SMTP, email templates).
-- **Task 8.5: Create Backup, Export, and Data Management Tools** (Ausente/Errado)
+- **Task 8.5: Create Backup, Export, and Data Management Tools** (Em Andamento)
   - Develop a backup feature to export all user data (clients, invoices) as a downloadable archive.
   - Implement data export tools for specific datasets (e.g., export all invoices as CSV or Excel).
   - Add data management options to delete or archive old records while maintaining compliance.
 
 ## Area: Reports & Analytics System
-- **Task 9.1: Build Comprehensive Reports Database Queries and Data Models** (Ausente/Errado) ✅
+- **Task 9.1: Build Comprehensive Reports Database Queries and Data Models** (Em Andamento) ✅
   - Design report-specific data schemas and aggregation tables in Supabase for performance. ✅
   - Create SQL queries for revenue calculations by period (monthly, quarterly, yearly). ✅
   - Develop tax calculation queries for GST/HST breakdowns by province. ✅
   - Implement client performance aggregation queries for revenue and payment metrics. ✅
   - Build invoice aging and status tracking queries for overdue analysis. ✅
-- **Task 9.2: Create Report Generation Engine with Date Range Selection** (Ausente/Errado)
+- **Task 9.2: Create Report Generation Engine with Date Range Selection** (Em Andamento)
   - Develop a report generation engine to fetch and process data based on user parameters.
   - Implement a date range picker component with validation for custom report periods.
   - Create a report parameter selection interface for users to choose report types and filters.
   - Add caching mechanisms to optimize report generation performance.
   - Implement a report preview and validation system before final export.
-- **Task 9.3: Implement Pre-Defined Period Reports** (Ausente/Errado)
+- **Task 9.3: Implement Pre-Defined Period Reports** (Em Andamento)
   - Create templates for "This Month" and "Last Month" reports.
   - Build quarterly report generation for Q1, Q2, Q3, and Q4.
   - Implement yearly reports for "This Year" and "Last Year".
   - Add Year-to-Date (YTD) reporting functionality.
   - Create fiscal year support aligned with Canadian tax periods.
-- **Task 9.4: Build Custom Date Range Selector with Calendar Interface** (Ausente/Errado)
+- **Task 9.4: Build Custom Date Range Selector with Calendar Interface** (Em Andamento)
   - Implement a dual calendar date picker for selecting start and end dates.
   - Add date validation and business logic constraints (e.g., prevent future dates for certain reports).
   - Create quick selection shortcuts (e.g., Last 30 Days, Last 90 Days).
   - Implement timezone handling for accurate date calculations.
   - Add date range presets and user favorites for frequent report periods.
-- **Task 9.5: Create Multiple Export Formats (PDF, CSV, Excel)** (Ausente/Errado)
+- **Task 9.5: Create Multiple Export Formats (PDF, CSV, Excel)** (Em Andamento)
   - Build PDF report generation with professional, branded templates.
   - Implement CSV export with proper formatting for accounting software integration.
   - Create Excel export with charts and conditional formatting for visual analysis.
@@ -114,30 +114,30 @@ This document outlines the pending tasks for the finalization sprint of the Simp
   - Develop print-optimized report layouts for physical documentation.
 
 ## Area: Advanced Analytics Dashboard
-- **Task 10.1: Enhance Financial Overview Dashboard with Charts and Metrics** (Parcial)
+- **Task 10.1: Enhance Financial Overview Dashboard with Charts and Metrics** (Em Andamento)
   - Implement revenue trend charts (line, bar, area) using libraries like Recharts or Chart.js in `src/pages/Dashboard.tsx`.
   - Add real-time financial metrics for total revenue, pending, and overdue amounts.
   - Develop payment trend analysis and basic forecasting features.
   - Create comparative period analysis (Month-over-Month, Year-over-Year).
-- **Task 10.2: Create Invoice Performance Analytics and Trends** (Ausente/Errado)
+- **Task 10.2: Create Invoice Performance Analytics and Trends** (Em Andamento)
   - Build invoice status distribution charts to visualize draft, sent, paid, and overdue statuses.
   - Create payment timeline and aging analysis for overdue invoices.
   - Implement invoice velocity and cycle time metrics (e.g., average time to payment).
   - Add seasonal trend analysis to identify patterns in invoicing activity.
   - Develop overdue invoice tracking with automated alerts for follow-up.
-- **Task 10.3: Implement Client Analytics and Relationship Insights** (Ausente/Errado)
+- **Task 10.3: Implement Client Analytics and Relationship Insights** (Em Andamento)
   - Build top clients by revenue analysis with visual charts.
   - Create client payment behavior scoring to assess reliability.
   - Implement client lifetime value calculations for business planning.
   - Add client acquisition and retention metrics to track growth.
   - Develop client profitability analysis to identify high-value relationships.
-- **Task 10.4: Add CRA-Compliant Tax Reporting and Summaries** (Ausente/Errado)
+- **Task 10.4: Add CRA-Compliant Tax Reporting and Summaries** (Em Andamento)
   - Build GST/HST collection summary reports for tax filing.
   - Create provincial tax breakdown analysis for multi-region businesses.
   - Implement business income categorization for accurate tax reporting.
   - Add tax period comparison and trending for historical analysis.
   - Develop audit-ready documentation and backup reports for compliance.
-- **Task 10.5: Create Automated Report Scheduling and Email Delivery** (Ausente/Errado)
+- **Task 10.5: Create Automated Report Scheduling and Email Delivery** (Em Andamento)
   - Build a report scheduling interface for daily, weekly, or monthly automated reports.
   - Implement background jobs for automated report generation using Supabase Edge Functions.
   - Create an email template system for professional report delivery.
@@ -145,54 +145,54 @@ This document outlines the pending tasks for the finalization sprint of the Simp
   - Implement delivery tracking and error handling for scheduled reports.
 
 ## Area: Testing & Quality Assurance
-- **Task 11.1: Comprehensive Unit Testing for All Components** (Ausente/Errado)
+- **Task 11.1: Comprehensive Unit Testing for All Components** (Em Andamento)
   - Write unit tests for all React components using Vitest and React Testing Library.
   - Ensure 95%+ test coverage for critical business logic (e.g., invoice calculations, tax logic).
-- **Task 11.2: Integration Testing for Complete User Flows** (Ausente/Errado)
+- **Task 11.2: Integration Testing for Complete User Flows** (Em Andamento)
   - Develop integration tests for key user flows (e.g., client creation to invoice sending).
   - Test Supabase integration points for data consistency and error handling.
-- **Task 11.3: Cross-Browser Testing and Compatibility** (Ausente/Errado)
+- **Task 11.3: Cross-Browser Testing and Compatibility** (Em Andamento)
   - Test application functionality and UI rendering across major browsers (Chrome, Firefox, Safari, Edge).
   - Address any browser-specific issues with CSS or JavaScript polyfills.
-- **Task 11.4: Performance Optimization and Loading Speed** (Ausente/Errado)
+- **Task 11.4: Performance Optimization and Loading Speed** (Em Andamento)
   - Conduct performance audits using tools like Lighthouse to identify bottlenecks.
   - Optimize bundle size, lazy loading, and API calls for faster load times.
-- **Task 11.5: Security Audit and Data Protection Compliance** (Ausente/Errado)
+- **Task 11.5: Security Audit and Data Protection Compliance** (Em Andamento)
   - Perform a security audit to identify vulnerabilities in authentication and data handling.
   - Ensure compliance with PIPEDA for Canadian user data privacy.
   - Implement data encryption for sensitive information at rest and in transit.
 
 ## Area: Mobile Application Development
-- **Task 11.1: Set Up React Native + Expo Project Structure** (Ausente/Errado)
+- **Task 11.1: Set Up React Native + Expo Project Structure** (Em Andamento)
   - Initialize a React Native project with Expo for cross-platform mobile development.
   - Configure project structure to align with existing web codebase.
-- **Task 11.2: Adapt Web Components for Mobile (NativeWind/Tamagui)** (Ausente/Errado)
+- **Task 11.2: Adapt Web Components for Mobile (NativeWind/Tamagui)** (Em Andamento)
   - Adapt shadcn-ui components for mobile using NativeWind or Tamagui for styling.
   - Ensure touch-friendly UI elements for mobile navigation and interaction.
-- **Task 11.3: Implement Mobile-Specific Features (Camera, Sharing)** (Ausente/Errado)
+- **Task 11.3: Implement Mobile-Specific Features (Camera, Sharing)** (Em Andamento)
   - Integrate camera functionality for scanning business cards or adding invoice photos.
   - Add native sharing options for invoices and reports directly from the device.
-- **Task 11.4: Create Offline Functionality and Data Sync** (Ausente/Errado)
+- **Task 11.4: Create Offline Functionality and Data Sync** (Em Andamento)
   - Implement offline support for creating and viewing invoices using local storage.
   - Develop sync mechanisms to update data with Supabase when connectivity is restored.
-- **Task 11.5: Add Push Notifications and Mobile Optimizations** (Ausente/Errado)
+- **Task 11.5: Add Push Notifications and Mobile Optimizations** (Em Andamento)
   - Integrate push notifications for invoice status updates and reminders.
   - Optimize mobile app performance for battery life and data usage.
 
 ## Area: Deployment & Launch Preparation
-- **Task 12.1: Set Up Production Environments and CI/CD Pipeline** (Ausente/Errado)
+- **Task 12.1: Set Up Production Environments and CI/CD Pipeline** (Em Andamento)
   - Configure production environments in Supabase for scalability and reliability.
   - Set up CI/CD pipelines using GitHub Actions and Vercel for automated deployments.
-- **Task 12.2: Prepare App Store Submissions (iOS/Android)** (Ausente/Errado)
+- **Task 12.2: Prepare App Store Submissions (iOS/Android)** (Em Andamento)
   - Prepare app store listings, screenshots, and descriptions for iOS and Android.
   - Ensure compliance with app store guidelines for submission.
-- **Task 12.3: Create User Documentation and Help System** (Ausente/Errado)
+- **Task 12.3: Create User Documentation and Help System** (Em Andamento)
   - Develop comprehensive user guides for core features (invoicing, client management).
   - Create an in-app help system or FAQ section for user support.
-- **Task 12.4: Set Up Customer Support and Feedback Collection** (Ausente/Errado)
+- **Task 12.4: Set Up Customer Support and Feedback Collection** (Em Andamento)
   - Implement a feedback form within the app for users to report issues or suggest features.
   - Set up a customer support channel (e.g., email, chat) for direct assistance.
-- **Task 12.5: Execute Beta Testing and Launch Strategy** (Ausente/Errado)
+- **Task 12.5: Execute Beta Testing and Launch Strategy** (Em Andamento)
   - Recruit beta testers to provide feedback on usability and bugs.
   - Develop a phased launch strategy to roll out features incrementally post-MVP.
 
