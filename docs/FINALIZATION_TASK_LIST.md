@@ -144,6 +144,10 @@ This document outlines the pending tasks for the finalization sprint of the Simp
   - Add subscription management for report recipients (e.g., accountant, team members).
   - Implement delivery tracking and error handling for scheduled reports.
 
+## Area: Notifications & Alerts
+- **Task: Implement GST Exemption Limit Notifications** (Em Andamento)
+  - Notify users when their total invoiced amount approaches the $30,000 threshold within a calendar year, advising them to register for a GST number in compliance with CRA regulations.
+
 ## Area: Testing & Quality Assurance
 - **Task 11.1: Comprehensive Unit Testing for All Components** (Em Andamento)
   - Write unit tests for all React components using Vitest and React Testing Library.
