@@ -1,56 +1,129 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DatePickerWithRange } from '../../../components/ui/date-picker-with-range';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DateRange } from 'react-day-picker';
+import { useMutation } from '@tanstack/react-query';
+import { supabase } from '../../../integrations/supabase/client';
+import Papa from 'papaparse';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import ReportParameterSelection from './ReportParameterSelection';
+import { Skeleton } from '../../../components/ui/skeleton';
+import DataTable from '../../../components/ui/data-table';
+import DataChart from '../../../components/ui/data-chart';
+import { Button } from '../../../components/ui/button';
 
-interface ReportGeneratorProps {
-  onGenerate: (reportType: string, dateRange: DateRange) => void;
-}
+type ReportParams = {
+  reportType: string;
+  startDate: string;
+  endDate: string;
+};
 
-const ReportGenerator: React.FC<ReportGeneratorProps> = ({ onGenerate }) => {
-  const [reportType, setReportType] = useState('revenue_summary');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+const generateReport = async (params: ReportParams) => {
+  const { data, error } = await supabase.rpc(`calculate_${params.reportType}_report`, {
+    start_date: params.startDate,
+    end_date: params.endDate,
+  });
 
-  const handleGenerate = () => {
-    if (reportType && dateRange) {
-      onGenerate(reportType, dateRange);
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
+};
+
+const ReportGenerator: React.FC = () => {
+  const [reportData, setReportData] = useState<any>(null);
+
+  const mutation = useMutation({
+    mutationFn: generateReport,
+    onSuccess: (data) => {
+      setReportData(data);
+      console.log("Report generated:", data);
+    },
+    onError: (error) => {
+      console.error("Error generating report:", error.message);
+      setReportData(null);
     }
-  };
+  });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Report Generator</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div>
-            <Select onValueChange={setReportType} defaultValue={reportType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a report type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="revenue_summary">Revenue Summary</SelectItem>
-                <SelectItem value="tax_summary">Tax Summary</SelectItem>
-                <SelectItem value="client_performance">Client Performance</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <DatePickerWithRange onSelect={setDateRange} />
-          </div>
-<div className="flex space-x-2">
-            <Button onClick={() => onGenerate(reportType, { from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), to: new Date() })}>This Month</Button>
-            <Button onClick={() => onGenerate(reportType, { from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1), to: new Date(new Date().getFullYear(), new Date().getMonth(), 0) })}>Last Month</Button>
-          </div>
-<Button onClick={handleGenerate}>Generate Report</Button>
-          <Button onClick={() => console.log('Exporting CSV...')}>Export as CSV</Button>
+    <div className="space-y-6">
+      <ReportParameterSelection 
+        onGenerate={mutation.mutate} 
+        isGenerating={mutation.isPending} 
+      />
+
+      {mutation.isPending && (
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-20 w-full" />
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {reportData && Array.isArray(reportData) && reportData.length > 0 && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Report Results</h2>
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => exportToCSV(reportData)}
+                variant="outline"
+              >
+                Export to CSV
+              </Button>
+              <Button
+                onClick={() => exportToPDF(reportData)}
+                variant="outline"
+              >
+                Export to PDF
+              </Button>
+            </div>
+          </div>
+          
+          {/* Example: Render a chart for revenue report */}
+          {mutation.data && mutation.data[0]?.total_invoiced !== undefined && (
+             <DataChart 
+                data={reportData}
+                xAxisKey="client_name" // Assuming client performance report for this example
+                barDataKey="total_revenue"
+                fill="#8884d8"
+             />
+          )}
+
+          <DataTable data={reportData} />
+        </div>
+      )}
+
+      {mutation.isError && (
+         <div className="text-red-500">
+            Failed to generate report: {mutation.error.message}
+         </div>
+      )}
+    </div>
   );
+};
+
+const exportToCSV = (data: any[]) => {
+  const csv = Papa.unparse(data);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'report.csv');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const exportToPDF = (data: any[]) => {
+  const doc = new jsPDF();
+  const tableColumn = Object.keys(data[0]);
+  const tableRows = data.map((item) => Object.values(item));
+
+  (doc as any).autoTable({
+    head: [tableColumn],
+    body: tableRows,
+  });
+
+  doc.save('report.pdf');
 };
 
 export default ReportGenerator;

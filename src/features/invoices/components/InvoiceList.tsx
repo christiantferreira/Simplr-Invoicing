@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import { Link } from 'react-router-dom';
+import SendInvoiceModal from './SendInvoiceModal';
 
 interface InvoiceListProps {
   invoices: Invoice[];
@@ -21,9 +22,8 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, clients, onDelete }
     invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getClientName = (clientId: string) => {
-    const client = clients.find((c) => c.id === clientId);
-    return client ? client.name : 'Unknown';
+  const getClient = (clientId: string) => {
+    return clients.find((c) => c.id === clientId);
   };
 
   return (
@@ -59,7 +59,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, clients, onDelete }
             {filteredInvoices.map((invoice) => (
               <TableRow key={invoice.id}>
                 <TableCell>{invoice.invoice_number}</TableCell>
-<TableCell>{getClientName(invoice.client_id)}</TableCell>
+                <TableCell>{getClient(invoice.client_id)?.name || 'Unknown'}</TableCell>
                 <TableCell>
                   <InvoiceStatusBadge status={invoice.status} />
                 </TableCell>
@@ -73,6 +73,12 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, clients, onDelete }
                   <Button variant="ghost" size="sm" asChild>
                     <Link to={`/invoices/${invoice.id}/preview`}>Preview</Link>
                   </Button>
+                  <SendInvoiceModal
+                    invoiceId={invoice.id}
+                    clientEmail={getClient(invoice.client_id)?.email || ''}
+                  >
+                    <Button variant="ghost" size="sm">Send</Button>
+                  </SendInvoiceModal>
                   <Button variant="ghost" size="sm" onClick={() => onDelete(invoice.id)}>Delete</Button>
                 </TableCell>
               </TableRow>

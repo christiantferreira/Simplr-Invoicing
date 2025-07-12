@@ -11,21 +11,11 @@ export const useSupabaseInvoices = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get next invoice number based on company settings
+  // Get next invoice number based on existing invoices
   const getNextInvoiceNumber = async (): Promise<string> => {
     if (!user) return '001';
 
     try {
-      // Get company settings for prefix and starting number
-      const { data: companyData } = await supabase
-        .from('company_info')
-        .select('invoice_prefix, invoice_start_number')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const prefix = companyData?.invoice_prefix || '';
-      const startNumber = companyData?.invoice_start_number || 1;
-
       // Get the highest invoice number from existing invoices
       const { data: invoicesData } = await supabase
         .from('invoices')
@@ -33,37 +23,22 @@ export const useSupabaseInvoices = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      let nextNumber = startNumber;
+      let nextNumber = 1;
 
       if (invoicesData && invoicesData.length > 0) {
-        // Find the highest number from existing invoices with the same prefix
         const numbers = invoicesData
-          .map(inv => inv.invoice_number)
-          .filter(num => {
-            if (!num) return false;
-            // If prefix is empty, check if the invoice number is purely numeric
-            if (prefix === '') {
-              return /^\d+$/.test(num);
-            }
-            // Otherwise, check if it starts with the prefix
-            return num.startsWith(prefix);
-          })
-          .map(num => {
-            const numberPart = num?.replace(prefix, '');
-            return parseInt(numberPart || '0', 10);
-          })
+          .map(inv => parseInt(inv.invoice_number.replace(/[^0-9]/g, ''), 10))
           .filter(num => !isNaN(num));
 
         if (numbers.length > 0) {
-          const maxNumber = Math.max(...numbers);
-          nextNumber = Math.max(maxNumber + 1, startNumber);
+          nextNumber = Math.max(...numbers) + 1;
         }
       }
 
-      return `${prefix}${String(nextNumber).padStart(3, '0')}`;
+      return String(nextNumber).padStart(3, '0');
     } catch (error) {
       console.error('Error generating invoice number:', error);
-      return '001';
+      return '001'; // Fallback
     }
   };
 
@@ -92,7 +67,6 @@ export const useSupabaseInvoices = () => {
         phone: client.phone || '',
         company: client.company || '',
         address: client.address || '',
-        createdAt: client.created_at ? new Date(client.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         created_at: client.created_at || '',
       }));
       
@@ -150,7 +124,6 @@ export const useSupabaseInvoices = () => {
             invoice_id: item.invoice_id || '',
             description: item.description || '',
             quantity: item.quantity || 1,
-            unitPrice: Number(item.unit_price) || 0,
             unit_price: Number(item.unit_price) || 0,
             total: Number(item.total) || 0,
           }));
@@ -158,14 +131,10 @@ export const useSupabaseInvoices = () => {
         return {
           id: invoice.id,
           user_id: invoice.user_id || '',
-          invoiceNumber: invoice.invoice_number || '',
           invoice_number: invoice.invoice_number || '',
-          clientId: invoice.client_id,
           client_id: invoice.client_id || '',
           status: (invoice.status || 'draft') as 'draft' | 'sent' | 'paid' | 'overdue',
-          issueDate: invoice.issue_date || '',
           issue_date: invoice.issue_date || '',
-          dueDate: invoice.due_date || '',
           due_date: invoice.due_date || '',
           items: invoiceItems,
           subtotal: Number(invoice.subtotal) || 0,
@@ -173,11 +142,8 @@ export const useSupabaseInvoices = () => {
           tax: Number(invoice.tax) || 0,
           total: Number(invoice.total) || 0,
           notes: invoice.notes || '',
-          templateId: 'classic',
-          createdAt: new Date(invoice.created_at).toISOString().split('T')[0],
-          updatedAt: new Date(invoice.updated_at || invoice.created_at).toISOString().split('T')[0],
-          updated_at: invoice.updated_at || invoice.created_at || '',
           created_at: invoice.created_at || '',
+          updated_at: invoice.updated_at || invoice.created_at || '',
         };
       });
       

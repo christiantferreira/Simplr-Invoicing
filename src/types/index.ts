@@ -6,18 +6,31 @@ export type EmailAddress = string;
 export type PhoneNumber = string;
 export type HexColor = string;
 
-// Company Settings
+// Company Settings - Aligned with 'settings' table
 export interface CompanySettings {
   id: UUID;
-  name: string;
-  address?: string;
-  phone?: PhoneNumber;
-  email?: EmailAddress;
-  logo?: string;
-  primaryColor: HexColor;
-  secondaryColor: HexColor;
-  hasGST?: boolean;
-  gstNumber?: string;
+  user_id: UUID;
+  business_legal_name: string;
+  trade_name?: string;
+  province: string;
+  city: string;
+  address_extra_type?: string;
+  address_extra_value?: string;
+  street_number: string;
+  street_name: string;
+  county?: string;
+  postal_code: string;
+  is_service_provider: boolean;
+  service_area?: string;
+  service_type?: string;
+  gst_number?: string;
+  business_number?: string;
+  has_completed_setup: boolean;
+  created_at: DateString;
+  updated_at: DateString;
+  // These fields are not in the settings table and should be managed elsewhere
+  primary_color?: HexColor; 
+  secondary_color?: HexColor;
 }
 
 // Client Management
@@ -55,7 +68,7 @@ export interface InvoiceItem {
 export interface CreateInvoiceItemData {
   description: string;
   quantity: number;
-  unitPrice: CurrencyAmount;
+  unit_price: CurrencyAmount;
 }
 
 // Invoice Status and Templates
@@ -84,17 +97,16 @@ export interface Invoice {
 }
 
 export interface CreateInvoiceData {
-  clientId: UUID;
+  client_id: UUID;
   status: InvoiceStatus;
-  issueDate: DateString;
-  dueDate: DateString;
+  issue_date: DateString;
+  due_date: DateString;
   items: InvoiceItem[];
   subtotal: CurrencyAmount;
   discount: CurrencyAmount;
   tax: CurrencyAmount;
   total: CurrencyAmount;
   notes?: string;
-  templateId: TemplateId;
 }
 
 // Dashboard and Statistics
@@ -109,7 +121,7 @@ export interface DashboardStats {
 export interface TaxConfiguration {
   id: UUID;
   user_id: UUID;
-  province_code: string;
+  province: string; // Corrected from province_code
   tax_name: string;
   tax_rate: number;
   is_enabled: boolean;
@@ -139,17 +151,16 @@ export interface PaginatedResponse<T> {
 
 // Form Types
 export interface InvoiceFormData {
-  clientId: string;
+  client_id: string;
   status: InvoiceStatus;
-  issueDate: DateString;
-  dueDate: DateString;
+  issue_date: DateString;
+  due_date: DateString;
   items: InvoiceItem[];
   subtotal: CurrencyAmount;
   discount: CurrencyAmount;
   tax: CurrencyAmount;
   total: CurrencyAmount;
   notes?: string;
-  templateId: TemplateId;
 }
 
 // Error Types

@@ -129,3 +129,24 @@ export const extractBusinessNumber = (gstNumber: string): string => {
   }
   return '';
 };
+
+// GST/HST Rates per province
+export const PROVINCE_TAX_RATES = [
+  { code: 'AB', name: 'GST', rate: 5 },
+  { code: 'BC', name: 'GST', rate: 5 },
+  { code: 'MB', name: 'GST', rate: 5 },
+  { code: 'NT', name: 'GST', rate: 5 },
+  { code: 'NU', name: 'GST', rate: 5 },
+  { code: 'QC', name: 'GST', rate: 5 },
+  { code: 'SK', name: 'GST', rate: 5 },
+  { code: 'YT', name: 'GST', rate: 5 },
+  { code: 'ON', name: 'HST', rate: 13 },
+  { code: 'NB', name: 'HST', rate: 15 },
+  { code: 'NL', name: 'HST', rate: 15 },
+  { code: 'PE', name: 'HST', rate: 15 },
+  { code: 'NS', name: 'HST', rate: 14 }, // As of April 1, 2025
+];
+
+export const getTaxInfoForProvince = (provinceCode: string) => {
+  return PROVINCE_TAX_RATES.find(p => p.code === provinceCode) || null;
+};

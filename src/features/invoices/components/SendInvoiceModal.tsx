@@ -1,134 +1,107 @@
-
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../../integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useInvoice } from '../contexts/InvoiceContext';
-import { Invoice, Client } from '@/types';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
+  DialogTrigger,
+  DialogFooter,
+} from '../../../components/ui/dialog';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Textarea } from '../../../components/ui/textarea';
+import { Label } from '../../../components/ui/label';
+import { Checkbox } from '../../../components/ui/checkbox';
+
+const checkGmailToken = async () => {
+  const { data, error } = await supabase
+    .from('gmail_tokens')
+    .select('id')
+    .limit(1)
+    .single();
+  return !!data && !error;
+};
 
 interface SendInvoiceModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  invoice: Invoice;
-  client: Client | null;
+  invoiceId: string;
+  clientEmail: string;
+  children: React.ReactNode; // To wrap the trigger button
 }
 
-const SendInvoiceModal: React.FC<SendInvoiceModalProps> = ({
-  isOpen,
-  onClose,
-  invoice,
-  client,
-}) => {
-  const { updateInvoice } = useInvoice();
-  const [email, setEmail] = useState(client?.email || '');
-  const [subject, setSubject] = useState(`Invoice ${invoice.invoiceNumber} from ${invoice.invoiceNumber}`);
-  const [message, setMessage] = useState(
-    `Dear ${client?.name || 'Client'},\n\nI hope this email finds you well. Please find attached invoice ${invoice.invoiceNumber} for the services provided.\n\nThe total amount due is ${new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(invoice.total)} and is due by ${format(new Date(invoice.dueDate), 'MMMM d, yyyy')}.\n\nPlease let me know if you have any questions.\n\nBest regards`
-  );
-  const [sending, setSending] = useState(false);
+const SendInvoiceModal: React.FC<SendInvoiceModalProps> = ({ invoiceId, clientEmail, children }) => {
+  const [useGmail, setUseGmail] = useState(false);
+  const { data: isGmailConnected } = useQuery({
+    queryKey: ['gmail_token_status'],
+    queryFn: checkGmailToken,
+  });
 
   const handleSend = async () => {
-    if (!email) {
-      toast.error('Please enter an email address');
-      return;
+    if (useGmail) {
+      console.log(`Sending invoice ${invoiceId} to ${clientEmail} using Gmail.`);
+      try {
+        const { data, error } = await supabase.functions.invoke('send-gmail', {
+          body: { 
+            to: clientEmail, 
+            subject: `Invoice from [Your Company]`, // Placeholder
+            body: `Hi, please find your invoice attached.` // Placeholder
+          },
+        });
+        if (error) throw error;
+        console.log('Email sent successfully:', data);
+        alert('Email sent successfully via Gmail!');
+      } catch (error: any) {
+        console.error('Failed to send email via Gmail:', error.message);
+        alert(`Failed to send email: ${error.message}`);
+      }
+    } else {
+      console.log(`Sending invoice ${invoiceId} to ${clientEmail} using default email service.`);
+      // Placeholder for default email service
+      alert("Default email service not implemented.");
     }
-
-    setSending(true);
-
-    // Simulate sending email
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Update invoice status
-    const updatedInvoice = {
-      ...invoice,
-      status: 'sent' as const,
-      sentAt: format(new Date(), 'yyyy-MM-dd'),
-    };
-    updateInvoice(updatedInvoice);
-
-    toast.success(`Invoice sent successfully to ${email}`);
-    setSending(false);
-    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Send Invoice {invoice.invoiceNumber}</DialogTitle>
+          <DialogTitle>Send Invoice</DialogTitle>
+          <DialogDescription>
+            Prepare the email to send the invoice. The PDF will be attached automatically.
+          </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="email">To Email Address *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="client@email.com"
-              required
-            />
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="to" className="text-right">
+              To
+            </Label>
+            <Input id="to" defaultValue={clientEmail} className="col-span-3" />
           </div>
-          
-          <div>
-            <Label htmlFor="subject">Subject</Label>
-            <Input
-              id="subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Invoice subject"
-            />
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="subject" className="text-right">
+              Subject
+            </Label>
+            <Input id="subject" defaultValue={`Invoice from [Your Company]`} className="col-span-3" />
           </div>
-          
-          <div>
-            <Label htmlFor="message">Message</Label>
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Your message to the client"
-              rows={8}
-            />
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="body" className="text-right">
+              Body
+            </Label>
+            <Textarea id="body" defaultValue={`Hi, please find your invoice attached.`} className="col-span-3" />
           </div>
-          
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium text-sm mb-2">Invoice Summary:</h4>
-            <div className="text-sm text-gray-600 space-y-1">
-              <div>Invoice: {invoice.invoiceNumber}</div>
-              <div>Amount: {new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-              }).format(invoice.total)}</div>
-              <div>Due: {format(new Date(invoice.dueDate), 'MMM d, yyyy')}</div>
+          {isGmailConnected && (
+            <div className="flex items-center space-x-2 justify-end col-span-4">
+              <Checkbox id="use-gmail" checked={useGmail} onCheckedChange={(checked) => setUseGmail(!!checked)} />
+              <Label htmlFor="use-gmail">Send using my Gmail account</Label>
             </div>
-          </div>
-          
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSend} 
-              disabled={sending}
-              className="bg-blue-500 hover:bg-blue-600"
-            >
-              {sending ? 'Sending...' : 'Send Invoice'}
-            </Button>
-          </div>
+          )}
         </div>
+        <DialogFooter>
+          <Button type="submit" onClick={handleSend}>Send Email</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

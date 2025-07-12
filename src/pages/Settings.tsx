@@ -21,6 +21,7 @@ import {
   CANADIAN_POSTAL_CODE_REGEX,
   CANADIAN_GST_REGEX,
   extractBusinessNumber,
+  getTaxInfoForProvince,
 } from '@/constants/serviceTypes';
 
 interface CompanySettings {
@@ -97,12 +98,12 @@ const Settings = () => {
     invoice_prefix: '',
     invoice_start_number: 1,
   });
-  const [taxConfigurations, setTaxConfigurations] = useState<TaxConfiguration[]>([]);
+  // const [taxConfigurations, setTaxConfigurations] = useState<TaxConfiguration[]>([]);
 
   useEffect(() => {
     console.log('Settings component mounted, user:', !!user);
     loadCompanySettings();
-    loadTaxConfigurations();
+    // loadTaxConfigurations(); // This is no longer needed
   }, [user]);
 
   const loadCompanySettings = async () => {
@@ -115,7 +116,7 @@ const Settings = () => {
 
     try {
       const { data, error } = await supabase
-        .from('company_info')
+        .from('settings')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
@@ -169,81 +170,6 @@ const Settings = () => {
     }
   };
 
-  const loadTaxConfigurations = async () => {
-    if (!user) return;
-
-    console.log('Loading tax configurations for user:', user.id);
-
-    try {
-      const { data, error } = await supabase
-        .from('tax_configurations')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('province_code', { ascending: true });
-
-      console.log('Tax configurations query result:', { data, error });
-
-      if (error) {
-        console.error('Error loading tax configurations:', error);
-        return;
-      }
-
-      if (data && data.length === 0) {
-        console.log('No tax configurations found, initializing defaults');
-        await initializeDefaultTaxConfigurations();
-        return;
-      }
-
-      setTaxConfigurations(data || []);
-    } catch (error) {
-      console.error('Error loading tax configurations:', error);
-    }
-  };
-
-  const initializeDefaultTaxConfigurations = async () => {
-    if (!user) return;
-
-    console.log('Initializing default tax configurations');
-
-    const defaultTaxes = [
-      { province_code: 'BC', tax_name: 'GST', tax_rate: 5.000 },
-      { province_code: 'BC', tax_name: 'GST/PST', tax_rate: 12.000 },
-      { province_code: 'AB', tax_name: 'GST', tax_rate: 5.000 },
-      { province_code: 'ON', tax_name: 'HST', tax_rate: 13.000 },
-      { province_code: 'NS', tax_name: 'HST', tax_rate: 15.000 },
-      { province_code: 'NB', tax_name: 'HST', tax_rate: 15.000 },
-      { province_code: 'PE', tax_name: 'HST', tax_rate: 15.000 },
-      { province_code: 'NL', tax_name: 'HST', tax_rate: 15.000 },
-      { province_code: 'QC', tax_name: 'GST + QST', tax_rate: 14.975 },
-      { province_code: 'MB', tax_name: 'GST + RST', tax_rate: 12.000 },
-      { province_code: 'SK', tax_name: 'GST + PST', tax_rate: 11.000 },
-    ];
-
-    try {
-      const { data, error } = await supabase
-        .from('tax_configurations')
-        .insert(
-          defaultTaxes.map(tax => ({
-            user_id: user.id,
-            ...tax,
-            is_enabled: false,
-          }))
-        )
-        .select();
-
-      console.log('Default tax configurations insert result:', { data, error });
-
-      if (error) {
-        console.error('Error initializing tax configurations:', error);
-        return;
-      }
-
-      setTaxConfigurations(data || []);
-    } catch (error) {
-      console.error('Error initializing tax configurations:', error);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -280,7 +206,6 @@ const Settings = () => {
         street_name: formData.street_name,
         county: formData.county || null,
         postal_code: formData.postal_code,
-        address: formattedAddress,
         is_service_provider: formData.is_service_provider,
         service_area: formData.service_area || null,
         service_type: formData.service_type || null,
@@ -299,7 +224,7 @@ const Settings = () => {
       if (formData.id) {
         // Update existing record
         const result = await supabase
-          .from('company_info')
+          .from('settings')
           .update(saveData)
           .eq('id', formData.id)
           .select();
@@ -308,7 +233,7 @@ const Settings = () => {
       } else {
         // Insert new record
         const result = await supabase
-          .from('company_info')
+          .from('settings')
           .insert(saveData)
           .select();
         data = result.data;
@@ -348,39 +273,14 @@ const Settings = () => {
       if (field === 'gst_number' && typeof value === 'string') {
         updated.business_number = extractBusinessNumber(value);
       }
+
+      // Sync company_name with business_legal_name
+      if (field === 'business_legal_name') {
+        updated.company_name = value as string;
+      }
       
       return updated;
     });
-  };
-
-  const handleTaxToggle = async (taxId: string, enabled: boolean) => {
-    console.log(`Toggling tax ${taxId} to:`, enabled);
-    
-    try {
-      const { error } = await supabase
-        .from('tax_configurations')
-        .update({ is_enabled: enabled })
-        .eq('id', taxId);
-
-      console.log('Tax toggle result:', { error });
-
-      if (error) {
-        console.error('Error updating tax configuration:', error);
-        toast.error('Error updating tax configuration');
-        return;
-      }
-
-      setTaxConfigurations(prev =>
-        prev.map(tax =>
-          tax.id === taxId ? { ...tax, is_enabled: enabled } : tax
-        )
-      );
-
-      toast.success('Tax configuration updated');
-    } catch (error) {
-      console.error('Error updating tax configuration:', error);
-      toast.error('Error updating tax configuration');
-    }
   };
 
   if (loading) {
@@ -429,16 +329,6 @@ const Settings = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="company_name">Display Name *</Label>
-                <Input
-                  id="company_name"
-                  value={formData.company_name}
-                  onChange={(e) => handleChange('company_name', e.target.value)}
-                  placeholder="Name shown on invoices"
-                  required
-                />
-              </div>
-              <div>
                 <Label htmlFor="email">Email Address *</Label>
                 <Input
                   id="email"
@@ -449,16 +339,15 @@ const Settings = () => {
                   required
                 />
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                value={formData.phone_number}
-                onChange={(e) => handleChange('phone_number', e.target.value)}
-                placeholder="+1 (555) 123-4567"
-              />
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone_number}
+                  onChange={(e) => handleChange('phone_number', e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -640,12 +529,12 @@ const Settings = () => {
         {/* GST Information */}
         <Card>
           <CardHeader>
-            <CardTitle>GST Information</CardTitle>
+            <CardTitle>GST/HST Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="gst_number">GST Number</Label>
+                <Label htmlFor="gst_number">GST/HST Number</Label>
                 <Input
                   id="gst_number"
                   value={formData.gst_number}
@@ -669,10 +558,23 @@ const Settings = () => {
                   disabled
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  Automatically extracted from GST number
+                  Automatically extracted from GST/HST number
                 </p>
               </div>
             </div>
+            {formData.province && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium mb-2">Automatic Tax Rate</h4>
+                <p className="text-sm text-gray-600">
+                  Based on your province ({formData.province}), the applicable tax is: <span className="font-mono font-semibold">
+                    {getTaxInfoForProvince(formData.province)?.name} - {getTaxInfoForProvince(formData.province)?.rate}%
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This rate will be applied to your invoices if a GST/HST number is provided.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -721,42 +623,7 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Tax Configuration */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tax Configuration</CardTitle>
-            <p className="text-sm text-gray-600">
-              Enable the tax types you want to use in your invoices. Only enabled taxes will appear in the invoice creation form.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {taxConfigurations.map((tax) => (
-                <div key={tax.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                  <Checkbox
-                    id={tax.id}
-                    checked={tax.is_enabled ?? false}
-                    onCheckedChange={(checked) => handleTaxToggle(tax.id, checked as boolean)}
-                  />
-                  <div className="flex-1">
-                    <Label htmlFor={tax.id} className="font-medium cursor-pointer">
-                      {tax.province_code} - {tax.tax_name}
-                    </Label>
-                    <p className="text-sm text-gray-500">{tax.tax_rate}%</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {taxConfigurations.filter(t => t.is_enabled).length === 0 && (
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  No tax options are currently enabled. Enable at least one tax option to use taxes in your invoices.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Tax Configuration section is now removed as it's automated */}
 
         {/* Appearance */}
         <Card>

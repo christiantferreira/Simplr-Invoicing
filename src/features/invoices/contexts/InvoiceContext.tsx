@@ -110,31 +110,25 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     try {
       const { data, error } = await supabase
-        .from('company_info')
+        .from('settings')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(1)
+        .single();
 
       if (error) {
-        console.error('Error loading company settings:', error);
+        // It's okay if no settings are found yet (PGRST116: "Not a single row was found")
+        if (error.code !== 'PGRST116') {
+          console.error('Error loading company settings:', error);
+        }
         return;
       }
 
-      if (data && data.length > 0) {
-        const companyData = data[0];
-        const companySettings: CompanySettings = {
-          id: companyData.id,
-          name: companyData.company_name || '',
-          address: companyData.address || '',
-          phone: companyData.phone_number || '',
-          email: companyData.email || '',
-          primaryColor: companyData.primary_color || '#3B82F6',
-          secondaryColor: companyData.secondary_color || '#6B7280',
-          hasGST: !!companyData.gst_number,
-          gstNumber: companyData.gst_number || '',
-        };
-        dispatch({ type: 'SET_COMPANY_SETTINGS', payload: companySettings });
+      if (data) {
+        // The data from the 'settings' table is now the source of truth.
+        // We cast it to CompanySettings, acknowledging there might be missing fields
+        // that the UI components will need to handle gracefully.
+        dispatch({ type: 'SET_COMPANY_SETTINGS', payload: data as CompanySettings });
       }
     } catch (error) {
       console.error('Exception loading company settings:', error);
@@ -160,7 +154,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [loading]);
 
   const calculateInvoiceTotals = (items: any[], discount: number = 0, taxRate: number = 0) => {
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     const discountAmount = subtotal * (discount / 100);
     const taxableAmount = subtotal - discountAmount;
     const taxAmount = taxableAmount * (taxRate / 100);
@@ -196,12 +190,13 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // Create the client object for local state
       const newClient: Client = {
         id: clientResult.id,
+        user_id: user.id,
         name: clientData.name,
         email: clientData.email,
         phone: clientData.phone || '',
         company: clientData.company || '',
         address: clientData.address || '',
-        createdAt: format(new Date(), 'yyyy-MM-dd'),
+        created_at: format(new Date(), 'yyyy-MM-dd'),
       };
 
       dispatch({ type: 'ADD_CLIENT', payload: newClient });
@@ -232,11 +227,11 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         .from('invoices')
         .insert({
           user_id: user.id,
-          client_id: invoiceData.clientId,
+          client_id: invoiceData.client_id,
           invoice_number: invoiceNumber,
           status: invoiceData.status,
-          issue_date: invoiceData.issueDate,
-          due_date: invoiceData.dueDate,
+          issue_date: invoiceData.issue_date,
+          due_date: invoiceData.due_date,
           subtotal: invoiceData.subtotal,
           discount: invoiceData.discount,
           tax: invoiceData.tax,
@@ -257,7 +252,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
               invoice_id: invoiceResult.id,
               description: item.description,
               quantity: item.quantity,
-              unit_price: item.unitPrice,
+              unit_price: item.unit_price,
               total: item.total,
             }))
           );
@@ -269,9 +264,10 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const newInvoice: Invoice = {
         ...invoiceData,
         id: invoiceResult.id,
-        invoiceNumber,
-        createdAt: now,
-        updatedAt: now,
+        user_id: user.id,
+        invoice_number: invoiceNumber,
+        created_at: now,
+        updated_at: now,
       };
 
       dispatch({ type: 'ADD_INVOICE', payload: newInvoice });
@@ -314,7 +310,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const totalRevenue = paidInvoices.reduce((sum, inv) => sum + inv.total, 0);
 
     const pendingInvoices = state.invoices.filter(inv => {
-      const dueDate = new Date(inv.dueDate);
+      const dueDate = new Date(inv.due_date);
       const today = new Date();
       return (inv.status === 'sent' || inv.status === 'viewed') && dueDate >= today;
     });
@@ -322,14 +318,14 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const overdueInvoices = state.invoices.filter(inv => {
       if (inv.status === 'paid') return false;
-      const dueDate = new Date(inv.dueDate);
+      const dueDate = new Date(inv.due_date);
       const today = new Date();
       return dueDate < today;
     });
     const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + inv.total, 0);
 
     const monthlyInvoices = state.invoices.filter(inv => {
-      const invoiceDate = new Date(inv.createdAt);
+      const invoiceDate = new Date(inv.created_at);
       return invoiceDate >= monthStart && invoiceDate <= monthEnd;
     }).length;
 
