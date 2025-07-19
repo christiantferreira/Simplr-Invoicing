@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(rmdir:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(file:*)",
+      "Bash(wc:*)"
     ],
     "deny": []
   }
