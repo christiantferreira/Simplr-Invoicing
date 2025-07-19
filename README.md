@@ -37,7 +37,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 npm run dev
 ```
 
-Then open: [http://localhost:3000](http://localhost:3000)
+Then open: [http://localhost:8080](http://localhost:8080)
 
 ---
 
