@@ -5,6 +5,7 @@ import {
   LayoutDashboard, 
   Users, 
   FileText, 
+  BarChart3,
   Settings, 
   X,
   Plus
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Clients', href: '/clients', icon: Users },
   { name: 'Invoices', href: '/invoices', icon: FileText },
+  { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 

@@ -16,6 +16,7 @@ import {
   LazyOnboarding,
   LazyWaitingForVerification,
   LazyClientInvoices,
+  LazyReports,
 } from '@/components/LazyComponents';
 
 const AppContent = () => {
@@ -141,6 +142,7 @@ const AppContent = () => {
             <Route path="/invoices/new" element={<LazyInvoiceEditor />} />
             <Route path="/invoices/:id/edit" element={<LazyInvoiceEditor />} />
             <Route path="/invoices/:id/preview" element={<LazyInvoicePreview />} />
+            <Route path="/reports" element={<LazyReports />} />
 <Route path="/settings" element={<LazySettings />} />
             <Route path="/clients/:clientId/invoices" element={<LazyClientInvoices />} />
             <Route path="*" element={<Navigate to="/" replace />} />

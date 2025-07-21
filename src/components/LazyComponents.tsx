@@ -11,6 +11,7 @@ export const LazyAuth = lazy(() => import('@/pages/Auth'));
 export const LazyOnboarding = lazy(() => import('@/pages/Onboarding'));
 export const LazyWaitingForVerification = lazy(() => import('@/pages/WaitingForVerification'));
 export const LazyClientInvoices = lazy(() => import('@/pages/ClientInvoices'));
+export const LazyReports = lazy(() => import('@/pages/Reports'));
 
 // Lazy load feature components
 export const LazyInvoicePreviewPanel = lazy(() => 

@@ -29,7 +29,7 @@ const generateReport = async (params: ReportParams) => {
 };
 
 const ReportGenerator: React.FC = () => {
-  const [reportData, setReportData] = useState<any>(null);
+  const [reportData, setReportData] = useState<Record<string, unknown>[] | null>(null);
 
   const mutation = useMutation({
     mutationFn: generateReport,
@@ -100,7 +100,7 @@ const ReportGenerator: React.FC = () => {
   );
 };
 
-const exportToCSV = (data: any[]) => {
+const exportToCSV = (data: Record<string, unknown>[]) => {
   const csv = Papa.unparse(data);
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
@@ -113,7 +113,7 @@ const exportToCSV = (data: any[]) => {
   document.body.removeChild(link);
 };
 
-const exportToPDF = (data: any[]) => {
+const exportToPDF = (data: Record<string, unknown>[]) => {
   const doc = new jsPDF();
   const tableColumn = Object.keys(data[0]);
   const tableRows = data.map((item) => Object.values(item));

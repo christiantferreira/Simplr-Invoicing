@@ -7,7 +7,7 @@ import { useInvoice } from '@/features/invoices';
 import StatusBadge from '@/components/StatusBadge';
 import { format } from 'date-fns';
 
-import ReportGenerationEngine from '@/features/reports/components/ReportGenerationEngine';
+import ReportGenerator from '@/features/reports/components/ReportGenerator';
 
 const Dashboard = () => {
   const { state, getDashboardStats } = useInvoice();
@@ -29,9 +29,6 @@ const Dashboard = () => {
     navigate(`/invoices?filter=${filterType}`);
   };
 
-  const handleGenerateReport = (startDate: Date, endDate: Date, reportType: string) => {
-    alert(`Generating ${reportType} report from ${startDate} to ${endDate}`);
-  };
 
   return (
     <div className="space-y-6">
@@ -153,7 +150,7 @@ const Dashboard = () => {
           )}
 </CardContent>
       </Card>
-      <ReportGenerationEngine onGenerateReport={(startDate, endDate, reportType) => handleGenerateReport(startDate, endDate, reportType)} />
+      <ReportGenerator />
     </div>
   );
 };
