@@ -42,6 +42,14 @@ export interface Client {
   phone?: PhoneNumber;
   address?: string;
   company?: string;
+  province?: string;
+  city?: string;
+  address_extra_type?: string;
+  address_extra_value?: string;
+  street_number?: string;
+  street_name?: string;
+  county?: string;
+  postal_code?: string;
   created_at: DateString;
 }
 
@@ -49,10 +57,15 @@ export interface CreateClientData {
   name: string;
   email: EmailAddress;
   phone?: PhoneNumber;
-  address?: string;
   company?: string;
-  hasGST?: boolean;
-  gstNumber?: string;
+  province?: string;
+  city?: string;
+  address_extra_type?: string;
+  address_extra_value?: string;
+  street_number?: string;
+  street_name?: string;
+  county?: string;
+  postal_code?: string;
 }
 
 // Invoice Items

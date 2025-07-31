@@ -10,8 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useInvoice } from '@/features/invoices';
 import { Client, CreateClientData } from '@/types';
+import {
+  CANADIAN_PROVINCES,
+  ADDRESS_EXTRA_TYPES,
+  CANADIAN_POSTAL_CODE_REGEX,
+} from '@/constants/serviceTypes';
 
 interface AddClientModalProps {
   isOpen: boolean;
@@ -31,10 +37,15 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
     name: '',
     email: '',
     phone: '',
-    address: '',
     company: '',
-    hasGST: false,
-    gstNumber: '',
+    province: '',
+    city: '',
+    address_extra_type: '',
+    address_extra_value: '',
+    street_number: '',
+    street_name: '',
+    county: '',
+    postal_code: '',
   });
 
   useEffect(() => {
@@ -43,20 +54,30 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
         name: editingClient.name,
         email: editingClient.email,
         phone: editingClient.phone || '',
-        address: editingClient.address || '',
         company: editingClient.company || '',
-        hasGST: false, // Default value since it's not in Client type
-        gstNumber: '', // Default value since it's not in Client type
+        province: editingClient.province || '',
+        city: editingClient.city || '',
+        address_extra_type: editingClient.address_extra_type || '',
+        address_extra_value: editingClient.address_extra_value || '',
+        street_number: editingClient.street_number || '',
+        street_name: editingClient.street_name || '',
+        county: editingClient.county || '',
+        postal_code: editingClient.postal_code || '',
       });
     } else {
       setFormData({
         name: '',
         email: '',
         phone: '',
-        address: '',
         company: '',
-        hasGST: false,
-        gstNumber: '',
+        province: '',
+        city: '',
+        address_extra_type: '',
+        address_extra_value: '',
+        street_number: '',
+        street_name: '',
+        county: '',
+        postal_code: '',
       });
     }
   }, [editingClient, isOpen]);
@@ -66,21 +87,14 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
     
     try {
       if (editingClient) {
-        // For update, ensure only Client type properties are passed
-        const { hasGST, gstNumber, ...clientData } = formData;
+        // For update, pass all form data
         updateClient({
           ...editingClient,
-          ...clientData,
+          ...formData,
         });
       } else {
-        // For add, pass the properties expected by the Client type, using type assertion
-        const newClient = await addClient({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          company: formData.company,
-        } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+        // For add, pass the properties expected by the CreateClientData type
+        const newClient = await addClient(formData as CreateClientData);
         if (newClient && onClientAdded) {
           onClientAdded(newClient);
         }
@@ -99,7 +113,7 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-simplr-primary">
             {editingClient ? 'Edit Client' : 'Add New Client'}
@@ -149,41 +163,114 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
             />
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="hasGST"
-                checked={formData.hasGST}
-                onChange={(e) => handleChange('hasGST', e.target.checked)}
-                className="rounded border-gray-300 text-simplr-accent focus:ring-simplr-accent"
-              />
-              <Label htmlFor="hasGST">do they have a gst number?</Label>
-            </div>
-            
-            {formData.hasGST && (
+          {/* Canadian Address Structure */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="gstNumber">GST Number *</Label>
+                <Label htmlFor="province">Province *</Label>
+                <Select value={formData.province} onValueChange={(value) => handleChange('province', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select province" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CANADIAN_PROVINCES.map((province) => (
+                      <SelectItem key={province.code} value={province.code}>
+                        {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="city">City *</Label>
                 <Input
-                  id="gstNumber"
-                  value={formData.gstNumber}
-                  onChange={(e) => handleChange('gstNumber', e.target.value)}
-                  placeholder="Enter GST Number"
-                  required={formData.hasGST}
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => handleChange('city', e.target.value)}
+                  placeholder="Enter city"
+                  required
                 />
               </div>
-            )}
-          </div>
-          
-          <div>
-            <Label htmlFor="address">Address</Label>
-            <Textarea
-              id="address"
-              value={formData.address}
-              onChange={(e) => handleChange('address', e.target.value)}
-              placeholder="123 Business St, City, State 12345"
-              rows={3}
-            />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="address_extra_type">Address Extra Type</Label>
+                <Select value={formData.address_extra_type} onValueChange={(value) => handleChange('address_extra_type', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ADDRESS_EXTRA_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="address_extra_value">Address Extra Value</Label>
+                <Input
+                  id="address_extra_value"
+                  value={formData.address_extra_value}
+                  onChange={(e) => handleChange('address_extra_value', e.target.value)}
+                  placeholder="e.g., 101, A, etc."
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="street_number">Street Number *</Label>
+                <Input
+                  id="street_number"
+                  value={formData.street_number}
+                  onChange={(e) => handleChange('street_number', e.target.value)}
+                  placeholder="123"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="street_name">Street Name *</Label>
+                <Input
+                  id="street_name"
+                  value={formData.street_name}
+                  onChange={(e) => handleChange('street_name', e.target.value)}
+                  placeholder="Main Street"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="county">County (Optional)</Label>
+                <Input
+                  id="county"
+                  value={formData.county}
+                  onChange={(e) => handleChange('county', e.target.value)}
+                  placeholder="Enter county"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="postal_code">Postal Code *</Label>
+                <Input
+                  id="postal_code"
+                  value={formData.postal_code}
+                  onChange={(e) => handleChange('postal_code', e.target.value.toUpperCase())}
+                  placeholder="A1A 1A1"
+                  required
+                />
+                {formData.postal_code && !CANADIAN_POSTAL_CODE_REGEX.test(formData.postal_code) && (
+                  <p className="text-sm text-destructive mt-1">Please enter a valid Canadian postal code</p>
+                )}
+              </div>
+            </div>
           </div>
           
           <div className="flex justify-end space-x-3 pt-4">
