@@ -1,9 +1,13 @@
 # Simplr Invoicing - Clean Start Development Plan
 
+> **📋 Template Origin:** This document is adapted from the [ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks.git) repository by snarktank.  
+> **🎯 Purpose:** Methodological framework for structured project development with quality gates.  
+> **✨ Adapted for:** Simplr Invoicing project with Supabase and React stack.
+
 ## Project Overview
 **Approach:** Fresh start with proven design and learned lessons  
-**Reference:** Existing design patterns that worked well  
-**Development Strategy:** Task-Directed Development with quality gates  
+**Reference:** Existing design patterns that worked well + snarktank/ai-dev-tasks methodology  
+**Development Strategy:** Task-Directed Development with quality gates (from ai-dev-tasks template)  
 **Estimated Timeline:** 14-18 weeks (conservative, quality-focused)  
 
 ## Design Foundation (What We're Keeping)

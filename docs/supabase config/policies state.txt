@@ -1,0 +1,545 @@
+activity_log
+
+Disable RLS
+
+Create policy
+
+INSERT
+
+
+Users can insert their own activity log
+Applied to: public role
+
+ALL
+
+
+Users can manage their own activity log
+Applied to: public role
+
+SELECT
+
+
+Users can view their own activity log
+Applied to: public role
+
+SELECT
+
+
+Users can view their own activity logs
+Applied to: public role
+
+aging_report_data
+
+Disable RLS
+
+Create policy
+
+INSERT
+
+
+Users can insert their own aging report data
+Applied to: public role
+
+ALL
+
+
+Users can manage their own aging_report_data
+Applied to: public role
+
+SELECT
+
+
+Users can view their own aging report data
+Applied to: public role
+
+client_performance_report_data
+
+Disable RLS
+
+Create policy
+
+INSERT
+
+
+Users can insert their own client performance report data
+Applied to: public role
+
+ALL
+
+
+Users can manage their own client_performance_report_data
+Applied to: public role
+
+SELECT
+
+
+Users can view their own client performance report data
+Applied to: public role
+
+clients
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Authenticated users can view their own clients
+Applied to: public role
+
+DELETE
+
+
+Users can delete their own clients
+Applied to: public role
+
+INSERT
+
+
+Users can insert their own clients
+Applied to: public role
+
+ALL
+
+
+Users can manage their own clients
+Applied to: public role
+
+UPDATE
+
+
+Users can update their own clients
+Applied to: public role
+
+SELECT
+
+
+Users can view their own clients
+Applied to: public role
+
+gmail_tokens
+
+Disable RLS
+
+Create policy
+
+DELETE
+
+
+Users can delete their own gmail tokens
+Applied to: public role
+
+INSERT
+
+
+Users can insert their own gmail tokens
+Applied to: public role
+
+ALL
+
+
+Users can manage their own gmail tokens
+Applied to: public role
+
+ALL
+
+
+Users can only access their own Gmail tokens
+Applied to: public role
+
+UPDATE
+
+
+Users can update their own gmail tokens
+Applied to: public role
+
+SELECT
+
+
+Users can view their own gmail tokens
+Applied to: public role
+
+invoice_items
+
+Disable RLS
+
+Create policy
+
+DELETE
+
+
+Users can delete items of their own invoices
+Applied to: public role
+
+INSERT
+
+
+Users can insert items to their own invoices
+Applied to: public role
+
+ALL
+
+
+Users can manage their own invoice items
+Applied to: public role
+
+UPDATE
+
+
+Users can update items of their own invoices
+Applied to: public role
+
+SELECT
+
+
+Users can view items of their own invoices
+Applied to: public role
+
+invoice_status_report_data
+
+Disable RLS
+
+Create policy
+
+INSERT
+
+
+Users can insert their own invoice status report data
+Applied to: public role
+
+ALL
+
+
+Users can manage their own invoice_status_report_data
+Applied to: public role
+
+SELECT
+
+
+Users can view their own invoice status report data
+Applied to: public role
+
+invoices
+
+Disable RLS
+
+Create policy
+
+SELECT
+
+
+Authenticated users can view their own invoices
+Applied to: public role
+
+DELETE
+
+
+Users can delete their own invoices
+Applied to: public role
+
+INSERT
+
+
+Users can insert their own invoices
+Applied to: public role
+
+ALL
+
+
+Users can manage their own invoices
+Applied to: public role
+
+UPDATE
+
+
+Users can update their own invoices
+Applied to: public role
+
+SELECT
+
+
+Users can view their own invoices
+Applied to: public role
+
+other_service_types_log
+
+Disable RLS
+
+Create policy
+
+INSERT
+
+
+Users can insert their own service types log
+Applied to: public role
+
+ALL
+
+
+Users can manage their own service logs
+Applied to: public role
+
+SELECT
+
+
+Users can view their own service types log
+Applied to: public role
+
+payments
+
+Disable RLS
+
+Create policy
+
+DELETE
+
+
+Users can delete their own payments
+Applied to: public role
+
+INSERT
+
+
+Users can insert their own payments
+Applied to: public role
+
+ALL
+
+
+Users can manage their own payments
+Applied to: public role
+
+UPDATE
+
+
+Users can update their own payments
+Applied to: public role
+
+SELECT
+
+
+Users can view their own payments
+Applied to: public role
+
+recurring_invoices
+
+Disable RLS
+
+Create policy
+
+DELETE
+
+
+Users can delete their own recurring invoices
+Applied to: public role
+
+INSERT
+
+
+Users can insert their own recurring invoices
+Applied to: public role
+
+ALL
+
+
+Users can manage their own recurring invoices
+Applied to: public role
+
+UPDATE
+
+
+Users can update their own recurring invoices
+Applied to: public role
+
+SELECT
+
+
+Users can view their own recurring invoices
+Applied to: public role
+
+report_parameters
+
+Disable RLS
+
+Create policy
+
+DELETE
+
+
+Users can delete their own report parameters
+Applied to: public role
+
+INSERT
+
+
+Users can insert their own report parameters
+Applied to: public role
+
+ALL
+
+
+Users can manage their own report parameters
+Applied to: public role
+
+UPDATE
+
+
+Users can update their own report parameters
+Applied to: public role
+
+SELECT
+
+
+Users can view their own report parameters
+Applied to: public role
+
+reports
+
+Disable RLS
+
+Create policy
+
+DELETE
+
+
+Users can delete their own reports
+Applied to: public role
+
+INSERT
+
+
+Users can insert their own reports
+Applied to: public role
+
+ALL
+
+
+Users can manage their own reports
+Applied to: public role
+
+UPDATE
+
+
+Users can update their own reports
+Applied to: public role
+
+SELECT
+
+
+Users can view their own reports
+Applied to: public role
+
+reports_cache
+
+Disable RLS
+
+Create policy
+
+DELETE
+
+
+Users can delete their own reports cache
+Applied to: public role
+
+INSERT
+
+
+Users can insert their own reports cache
+Applied to: public role
+
+ALL
+
+
+Users can manage their own reports_cache
+Applied to: public role
+
+UPDATE
+
+
+Users can update their own reports cache
+Applied to: public role
+
+SELECT
+
+
+Users can view their own reports cache
+Applied to: public role
+
+revenue_report_data
+
+Disable RLS
+
+Create policy
+
+INSERT
+
+
+Users can insert their own revenue report data
+Applied to: public role
+
+ALL
+
+
+Users can manage their own revenue_report_data
+Applied to: public role
+
+SELECT
+
+
+Users can view their own revenue report data
+Applied to: public role
+
+settings
+
+Disable RLS
+
+Create policy
+
+INSERT
+
+
+Users can insert their own settings
+Applied to: public role
+
+ALL
+
+
+Users can manage their own settings
+Applied to: public role
+
+UPDATE
+
+
+Users can update their own settings
+Applied to: public role
+
+SELECT
+
+
+Users can view their own settings
+Applied to: public role
+
+tax_summary_report_data
+
+Disable RLS
+
+Create policy
+
+INSERT
+
+
+Users can insert their own tax summary report data
+Applied to: public role
+
+ALL
+
+
+Users can manage their own tax_summary_report_data
+Applied to: public role
+
+SELECT
+
+
+Users can view their own tax summary report data
+Applied to: public role

@@ -1,0 +1,238 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.activity_log (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  action text NOT NULL,
+  details jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT activity_log_pkey PRIMARY KEY (id),
+  CONSTRAINT activity_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.aging_report_data (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  report_id uuid,
+  age_range text,
+  invoice_count bigint,
+  total_value numeric,
+  CONSTRAINT aging_report_data_pkey PRIMARY KEY (id),
+  CONSTRAINT aging_report_data_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.reports(id),
+  CONSTRAINT aging_report_data_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.client_performance_report_data (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  report_id uuid,
+  client_id uuid,
+  client_name text,
+  total_revenue numeric,
+  CONSTRAINT client_performance_report_data_pkey PRIMARY KEY (id),
+  CONSTRAINT client_performance_report_data_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT client_performance_report_data_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.reports(id)
+);
+CREATE TABLE public.clients (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  name text NOT NULL,
+  email text,
+  phone text,
+  address text,
+  company text,
+  created_at timestamp with time zone DEFAULT now(),
+  history jsonb,
+  notes text,
+  province text,
+  city text,
+  address_extra_type text,
+  address_extra_value text,
+  street_number text,
+  street_name text,
+  county text,
+  postal_code text,
+  gst_number text,
+  CONSTRAINT clients_pkey PRIMARY KEY (id),
+  CONSTRAINT clients_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.gmail_tokens (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE,
+  access_token text NOT NULL,
+  refresh_token text NOT NULL,
+  expires_at timestamp with time zone NOT NULL,
+  scope text NOT NULL DEFAULT 'https://www.googleapis.com/auth/gmail.send'::text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT gmail_tokens_pkey PRIMARY KEY (id),
+  CONSTRAINT gmail_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.invoice_items (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  invoice_id uuid,
+  description text NOT NULL,
+  quantity integer NOT NULL CHECK (quantity > 0),
+  unit_price numeric NOT NULL CHECK (unit_price >= 0::numeric),
+  total numeric NOT NULL,
+  CONSTRAINT invoice_items_pkey PRIMARY KEY (id),
+  CONSTRAINT invoice_items_invoice_id_fkey FOREIGN KEY (invoice_id) REFERENCES public.invoices(id)
+);
+CREATE TABLE public.invoice_status_report_data (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  report_id uuid,
+  status text,
+  invoice_count bigint,
+  total_value numeric,
+  CONSTRAINT invoice_status_report_data_pkey PRIMARY KEY (id),
+  CONSTRAINT invoice_status_report_data_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT invoice_status_report_data_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.reports(id)
+);
+CREATE TABLE public.invoices (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  client_id uuid,
+  invoice_number text NOT NULL,
+  status text NOT NULL DEFAULT 'draft'::text,
+  issue_date date NOT NULL,
+  due_date date,
+  subtotal numeric NOT NULL CHECK (subtotal >= 0::numeric),
+  discount numeric,
+  tax numeric,
+  total numeric NOT NULL CHECK (total >= 0::numeric),
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  payment_terms text,
+  currency text NOT NULL DEFAULT 'CAD'::text,
+  late_fee numeric,
+  payment_method text,
+  CONSTRAINT invoices_pkey PRIMARY KEY (id),
+  CONSTRAINT invoices_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id),
+  CONSTRAINT invoices_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.other_service_types_log (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  entered_service text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT other_service_types_log_pkey PRIMARY KEY (id),
+  CONSTRAINT other_service_types_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.payments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  invoice_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  amount numeric NOT NULL CHECK (amount > 0::numeric),
+  payment_date date NOT NULL DEFAULT now(),
+  payment_method text,
+  transaction_id text,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT payments_pkey PRIMARY KEY (id),
+  CONSTRAINT payments_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT payments_invoice_id_fkey FOREIGN KEY (invoice_id) REFERENCES public.invoices(id)
+);
+CREATE TABLE public.recurring_invoices (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  client_id uuid,
+  template_invoice_id uuid,
+  frequency text NOT NULL,
+  start_date date NOT NULL,
+  end_date date,
+  next_generation_date date NOT NULL,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT recurring_invoices_pkey PRIMARY KEY (id),
+  CONSTRAINT recurring_invoices_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT recurring_invoices_template_invoice_id_fkey FOREIGN KEY (template_invoice_id) REFERENCES public.invoices(id),
+  CONSTRAINT recurring_invoices_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id)
+);
+CREATE TABLE public.report_parameters (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  report_id uuid,
+  parameter_name text NOT NULL,
+  parameter_value text NOT NULL,
+  user_id uuid,
+  CONSTRAINT report_parameters_pkey PRIMARY KEY (id),
+  CONSTRAINT report_parameters_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT report_parameters_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.reports(id)
+);
+CREATE TABLE public.reports (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  name text NOT NULL,
+  description text,
+  report_type text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  data jsonb,
+  CONSTRAINT reports_pkey PRIMARY KEY (id),
+  CONSTRAINT reports_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.reports_cache (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  report_name text NOT NULL,
+  parameters jsonb,
+  data jsonb,
+  generated_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone,
+  CONSTRAINT reports_cache_pkey PRIMARY KEY (id),
+  CONSTRAINT reports_cache_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.revenue_report_data (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  report_id uuid,
+  total_invoiced numeric,
+  total_paid numeric,
+  total_outstanding numeric,
+  CONSTRAINT revenue_report_data_pkey PRIMARY KEY (id),
+  CONSTRAINT revenue_report_data_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT revenue_report_data_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.reports(id)
+);
+CREATE TABLE public.settings (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid UNIQUE,
+  business_legal_name text NOT NULL,
+  trade_name text,
+  province text NOT NULL,
+  city text NOT NULL,
+  address_extra_type text,
+  address_extra_value text,
+  street_number text NOT NULL,
+  street_name text NOT NULL,
+  county text,
+  postal_code text NOT NULL,
+  is_service_provider boolean NOT NULL DEFAULT true,
+  service_area text,
+  service_type text,
+  gst_number text,
+  business_number text,
+  has_completed_setup boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  company_name text,
+  email text,
+  phone_number text,
+  primary_color text,
+  secondary_color text,
+  invoice_prefix text,
+  invoice_start_number integer,
+  payment_details jsonb,
+  CONSTRAINT settings_pkey PRIMARY KEY (id),
+  CONSTRAINT settings_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.tax_summary_report_data (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  report_id uuid,
+  province text,
+  gst_hst_collected numeric,
+  CONSTRAINT tax_summary_report_data_pkey PRIMARY KEY (id),
+  CONSTRAINT tax_summary_report_data_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT tax_summary_report_data_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.reports(id)
+);
