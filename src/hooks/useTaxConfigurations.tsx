@@ -35,7 +35,14 @@ export const useTaxConfigurations = () => {
 
       if (error) {
         console.error('Error loading tax configurations:', error);
-        setError('Failed to load tax configurations');
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          userId: user.id
+        });
+        setError(`Failed to load tax configurations: ${error.message}`);
         return;
       }
 

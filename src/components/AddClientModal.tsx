@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -118,6 +119,11 @@ const AddClientModal: React.FC<AddClientModalProps> = ({
           <DialogTitle className="text-simplr-primary">
             {editingClient ? 'Edit Client' : 'Add New Client'}
           </DialogTitle>
+          <DialogDescription>
+            {editingClient 
+              ? 'Update the client information below.' 
+              : 'Fill in the client details to add a new client to your database.'}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
