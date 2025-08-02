@@ -105,6 +105,19 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { clients, invoices, loading, getNextInvoiceNumber, updateInvoice: updateInvoiceInSupabase } = useSupabaseInvoices();
   const { user } = useAuth();
 
+  const buildAddress = (settings: Record<string, unknown>): string | null => {
+    const parts = [
+      settings.street_number,
+      settings.street_name,
+      settings.address_extra_value ? `${settings.address_extra_type} ${settings.address_extra_value}` : null,
+      settings.city,
+      settings.province,
+      settings.postal_code
+    ].filter(Boolean);
+    
+    return parts.length > 0 ? parts.join(', ') : null;
+  };
+
   const loadCompanySettings = async () => {
     if (!user) return;
 
@@ -125,10 +138,23 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       if (data) {
-        // The data from the 'settings' table is now the source of truth.
-        // We cast it to CompanySettings, acknowledging there might be missing fields
-        // that the UI components will need to handle gracefully.
-        dispatch({ type: 'SET_COMPANY_SETTINGS', payload: data as CompanySettings });
+        // Map settings table fields to CompanySettings interface
+        const mappedSettings: CompanySettings = {
+          ...data,
+          // Map company name fields
+          name: data.business_legal_name || data.company_name || "Company Name Not Set",
+          // Build address from separate fields
+          address: buildAddress(data) || "Company Address Not Set",
+          // Map phone field
+          phone: data.phone_number || "Phone Number Not Set",
+          // Use settings email or fallback to user email
+          email: data.email || user.email || "Email Not Set",
+          // Map GST field
+          gstNumber: data.gst_number,
+          hasGST: !!data.gst_number,
+        };
+
+        dispatch({ type: 'SET_COMPANY_SETTINGS', payload: mappedSettings });
       }
     } catch (error) {
       console.error('Exception loading company settings:', error);

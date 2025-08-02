@@ -9,6 +9,11 @@ interface InvoicePreviewPanelProps {
   companySettings: CompanySettings | null;
 }
 
+interface ExtendedClient extends Client {
+  hasGST?: boolean;
+  gstNumber?: string;
+}
+
 const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
   invoice,
   client,
@@ -107,9 +112,6 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
             {companySettings.email === 'Email Not Set' && (
               <div className="text-sm text-gray-400 italic opacity-90">Email Not Set</div>
             )}
-            {companySettings.hasGST && companySettings.gstNumber && (
-              <div className="text-sm opacity-90 mt-1">GST: {companySettings.gstNumber}</div>
-            )}
           </div>
         </div>
       </div>
@@ -132,8 +134,8 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
                 )}
                 <div className="text-gray-600">{client.email}</div>
                 {client.phone && <div className="text-gray-600">{client.phone}</div>}
-                {(client as any).hasGST && (client as any).gstNumber && (
-                  <div className="text-gray-600">GST: {(client as any).gstNumber}</div>
+                {(client as ExtendedClient).hasGST && (client as ExtendedClient).gstNumber && (
+                  <div className="text-gray-600">GST: {(client as ExtendedClient).gstNumber}</div>
                 )}
               </div>
             ) : (
@@ -223,6 +225,13 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
             <div className="text-sm text-gray-600 whitespace-pre-wrap">
               {invoice.notes}
             </div>
+          </div>
+        )}
+
+        {/* Footer with GST */}
+        {companySettings.hasGST && companySettings.gstNumber && (
+          <div className="mt-8 pt-4 border-t border-gray-200 text-center">
+            <div className="text-sm text-gray-600">GST: {companySettings.gstNumber}</div>
           </div>
         )}
       </div>
