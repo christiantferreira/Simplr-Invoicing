@@ -79,6 +79,7 @@ export interface InvoiceItem {
   tax_rate?: number;
   tax_amount?: CurrencyAmount;
   tax_name?: string;
+  tax_value?: string; // Stores the select value for easier mapping
 }
 
 export interface CreateInvoiceItemData {

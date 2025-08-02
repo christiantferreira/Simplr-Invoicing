@@ -44,6 +44,7 @@ const InvoiceEditor = () => {
         tax_rate: 0,
         tax_amount: 0,
         tax_name: 'No Tax',
+        tax_value: 'no-tax',
       },
     ],
     subtotal: 0,
@@ -58,7 +59,19 @@ const InvoiceEditor = () => {
 
   useEffect(() => {
     if (existingInvoice) {
-      setInvoiceData(existingInvoice);
+      // Ensure existing invoice items have tax_value for compatibility
+      const itemsWithTaxValue = existingInvoice.items?.map(item => ({
+        ...item,
+        tax_value: item.tax_value || (item.tax_rate && item.tax_rate > 0 
+          ? enabledTaxOptions.find(opt => opt.rate === item.tax_rate)?.value || 'no-tax'
+          : 'no-tax')
+      })) || [];
+      
+      setInvoiceData({
+        ...existingInvoice,
+        items: itemsWithTaxValue
+      });
+      
       const client = state.clients.find(c => c.id === existingInvoice.client_id);
       setSelectedClient(client || null);
       setNextInvoiceNumber(existingInvoice.invoice_number);
@@ -66,7 +79,7 @@ const InvoiceEditor = () => {
       // Load next invoice number for new invoices
       getNextInvoiceNumber().then(setNextInvoiceNumber);
     }
-  }, [existingInvoice, state.clients, getNextInvoiceNumber]);
+  }, [existingInvoice, state.clients, getNextInvoiceNumber, enabledTaxOptions]);
 
   useEffect(() => {
     calculateTotals();
@@ -127,6 +140,7 @@ const InvoiceEditor = () => {
       tax_rate: 0,
       tax_amount: 0,
       tax_name: 'No Tax',
+      tax_value: 'no-tax',
     };
     setInvoiceData(prev => ({
       ...prev,
@@ -418,16 +432,22 @@ const InvoiceEditor = () => {
                       </div>
                       <div className="col-span-2">
                         <Select
-                          value={item.tax_rate ? enabledTaxOptions.find(opt => opt.rate === item.tax_rate)?.value || 'no-tax' : 'no-tax'}
+                          value={item.tax_value || 'no-tax'}
                           onValueChange={(value) => {
                             if (value === 'no-tax') {
+                              updateItem(index, 'tax_value', 'no-tax');
                               updateItem(index, 'tax_rate', 0);
+                              updateItem(index, 'tax_amount', 0);
                               updateItem(index, 'tax_name', 'No Tax');
                             } else {
                               const option = enabledTaxOptions.find(opt => opt.value === value);
                               if (option) {
+                                updateItem(index, 'tax_value', value);
                                 updateItem(index, 'tax_rate', option.rate);
                                 updateItem(index, 'tax_name', option.name);
+                                // Recalculate tax amount based on current total
+                                const subtotal = item.quantity * item.unit_price;
+                                updateItem(index, 'tax_amount', subtotal * (option.rate / 100));
                               }
                             }
                           }}
