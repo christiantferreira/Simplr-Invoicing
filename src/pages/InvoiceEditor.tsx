@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuth } from '@/hooks/useAuth';
 import { useInvoice, InvoicePreviewPanel } from '@/features/invoices';
 import { useTaxConfigurations } from '@/hooks/useTaxConfigurations';
+import { useAutoSave } from '@/hooks/useAutoSave';
 import { Invoice, InvoiceItem, Client, TemplateId } from '@/types';
 import AddClientModal from '@/components/AddClientModal';
 import { format, addDays } from 'date-fns';
@@ -49,6 +50,7 @@ const InvoiceEditor = () => {
     ],
     subtotal: 0,
     discount: 0,
+    discount_type: 'amount',
     tax: 0,
     total: 0,
     notes: '',
@@ -59,6 +61,31 @@ const InvoiceEditor = () => {
 
   // Get tax options before useEffects that depend on it
   const enabledTaxOptions = getEnabledTaxOptions();
+
+  // Auto-save functionality
+  const autoSaveKey = `invoice-draft-${id || 'new'}`;
+  const { restoreData, clearSavedData, hasSavedData } = useAutoSave({
+    key: autoSaveKey,
+    data: invoiceData,
+    delay: 2000, // Save after 2 seconds of inactivity
+    enabled: !isEditing, // Only auto-save for new invoices
+  });
+
+  // Restore auto-saved data on mount (only for new invoices)
+  useEffect(() => {
+    if (!isEditing && hasSavedData()) {
+      const savedData = restoreData();
+      if (savedData) {
+        setInvoiceData(savedData);
+        // Also restore selected client if it exists
+        if (savedData.client_id) {
+          const client = state.clients.find(c => c.id === savedData.client_id);
+          setSelectedClient(client || null);
+        }
+        toast.info('Draft restored from previous session');
+      }
+    }
+  }, [isEditing, hasSavedData, restoreData, state.clients]);
 
   useEffect(() => {
     if (existingInvoice) {
@@ -80,14 +107,16 @@ const InvoiceEditor = () => {
       setSelectedClient(client || null);
       setNextInvoiceNumber(existingInvoice.invoice_number);
     } else {
-      // Load next invoice number for new invoices
-      getNextInvoiceNumber().then(setNextInvoiceNumber);
+      // Load next invoice number for new invoices (only if no auto-saved data)
+      if (!hasSavedData()) {
+        getNextInvoiceNumber().then(setNextInvoiceNumber);
+      }
     }
-  }, [existingInvoice, state.clients, getNextInvoiceNumber]);
+  }, [existingInvoice, state.clients, getNextInvoiceNumber, hasSavedData]);
 
   useEffect(() => {
     calculateTotals();
-  }, [invoiceData.items, invoiceData.discount]);
+  }, [invoiceData.items, invoiceData.discount, invoiceData.discount_type]);
 
   // Update invoice data with invoice number for preview
   useEffect(() => {
@@ -99,9 +128,16 @@ const InvoiceEditor = () => {
   const calculateTotals = () => {
     const items = invoiceData.items || [];
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-    const discount = invoiceData.discount || 0;
+    const discountValue = invoiceData.discount || 0;
+    const discountType = invoiceData.discount_type || 'amount';
+    
+    // Calculate actual discount amount
+    const discountAmount = discountType === 'percentage' 
+      ? (subtotal * discountValue) / 100 
+      : discountValue;
+    
     const taxAmount = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0);
-    const total = subtotal - discount + taxAmount;
+    const total = subtotal - discountAmount + taxAmount;
 
     setInvoiceData(prev => ({
       ...prev,
@@ -180,6 +216,7 @@ const InvoiceEditor = () => {
       items: invoiceData.items!,
       subtotal: invoiceData.subtotal!,
       discount: invoiceData.discount!,
+      discount_type: invoiceData.discount_type || 'amount',
       tax: invoiceData.tax!,
       total: invoiceData.total!,
       notes: invoiceData.notes,
@@ -194,6 +231,8 @@ const InvoiceEditor = () => {
       } else {
         await addInvoice(invoiceToSave);
         toast.success(`Invoice saved as ${status === 'draft' ? 'Draft' : 'Ready'}`);
+        // Clear auto-saved data after successful save
+        clearSavedData();
       }
       navigate('/invoices');
     } catch (error) {
@@ -228,6 +267,7 @@ const InvoiceEditor = () => {
           items: invoiceData.items!,
           subtotal: invoiceData.subtotal!,
           discount: invoiceData.discount!,
+          discount_type: invoiceData.discount_type || 'amount',
           tax: invoiceData.tax!,
           total: invoiceData.total!,
           created_at: new Date().toISOString(),
@@ -236,6 +276,10 @@ const InvoiceEditor = () => {
       }
 
       toast.success(`Invoice sent to ${selectedClient?.email}`);
+      // Clear auto-saved data after successful send
+      if (!isEditing) {
+        clearSavedData();
+      }
       navigate('/invoices');
     } catch (error) {
       toast.error('Failed to send invoice');
@@ -366,23 +410,6 @@ const InvoiceEditor = () => {
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="template">Template</Label>
-                  <Select
-                    value={invoiceData.notes || ''}
-                    onValueChange={(value: TemplateId) => setInvoiceData(prev => ({ ...prev, notes: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="classic">Classic</SelectItem>
-                      <SelectItem value="modern">Modern</SelectItem>
-                      <SelectItem value="creative">Creative</SelectItem>
-                      <SelectItem value="professional">Professional</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </CardContent>
             </Card>
 
@@ -400,8 +427,8 @@ const InvoiceEditor = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-12 gap-3 text-sm font-medium text-gray-600 mb-2">
-                    <div className="col-span-4">Description</div>
-                    <div className="col-span-1">Qty</div>
+                    <div className="col-span-3">Description</div>
+                    <div className="col-span-2">Qty</div>
                     <div className="col-span-2">Price</div>
                     <div className="col-span-2">Tax</div>
                     <div className="col-span-2">Total</div>
@@ -409,27 +436,55 @@ const InvoiceEditor = () => {
                   </div>
                   {invoiceData.items?.map((item, index) => (
                     <div key={item.id} className="grid grid-cols-12 gap-3 items-center">
-                      <div className="col-span-4">
+                      <div className="col-span-3">
                         <Input
                           placeholder="Description"
                           value={item.description}
                           onChange={(e) => updateItem(index, 'description', e.target.value)}
                         />
                       </div>
-                      <div className="col-span-1">
+                      <div className="col-span-2">
                         <Input
                           type="number"
-                          placeholder="Qty"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                          placeholder="1"
+                          value={item.quantity || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow empty string for clearing the field
+                            if (value === '') {
+                              updateItem(index, 'quantity', 1);
+                            } else {
+                              // Parse as float and ensure it's a valid number
+                              const numValue = parseFloat(value);
+                              if (!isNaN(numValue) && numValue > 0) {
+                                updateItem(index, 'quantity', numValue);
+                              }
+                            }
+                          }}
+                          step="0.01"
+                          min="0.01"
                         />
                       </div>
                       <div className="col-span-2">
                         <Input
                           type="number"
-                          placeholder="Price"
-                          value={item.unit_price}
-                          onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                          value={item.unit_price || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow empty string for clearing the field
+                            if (value === '') {
+                              updateItem(index, 'unit_price', 0);
+                            } else {
+                              // Parse as float and ensure it's a valid number
+                              const numValue = parseFloat(value);
+                              if (!isNaN(numValue)) {
+                                updateItem(index, 'unit_price', numValue);
+                              }
+                            }
+                          }}
+                          step="0.01"
+                          min="0"
                         />
                       </div>
                       <div className="col-span-2">
@@ -455,7 +510,12 @@ const InvoiceEditor = () => {
                           }}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Tax" />
+                            <SelectValue>
+                              {item.tax_value === 'no-tax' 
+                                ? 'No Tax' 
+                                : enabledTaxOptions.find(opt => opt.value === item.tax_value)?.label || 'Select Tax'
+                              }
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="no-tax">No Tax</SelectItem>
@@ -499,21 +559,62 @@ const InvoiceEditor = () => {
                   
                   <div>
                     <Label htmlFor="discount">Discount</Label>
-                    <Input
-                      id="discount"
-                      type="number"
-                      placeholder="0.00"
-                      value={invoiceData.discount || ''}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="discount"
+                        type="number"
+                        placeholder={invoiceData.discount_type === 'percentage' ? '0' : '0.00'}
+                        value={invoiceData.discount || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            setInvoiceData(prev => ({ ...prev, discount: 0 }));
+                          } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                              setInvoiceData(prev => ({ ...prev, discount: numValue }));
+                            }
+                          }
+                        }}
+                        step={invoiceData.discount_type === 'percentage' ? '1' : '0.01'}
+                        min="0"
+                        max={invoiceData.discount_type === 'percentage' ? '100' : undefined}
+                        className="flex-1"
+                      />
+                      <Select
+                        value={invoiceData.discount_type || 'amount'}
+                        onValueChange={(value: 'amount' | 'percentage') => setInvoiceData(prev => ({ ...prev, discount_type: value }))}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="amount">Amount</SelectItem>
+                          <SelectItem value="percentage">Percent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
-                  {invoiceData.tax && invoiceData.tax > 0 && (
+                  {invoiceData.discount && invoiceData.discount > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Total Tax:</span>
-                      <span className="font-medium">{formatCurrency(invoiceData.tax || 0)}</span>
+                      <span className="text-sm">
+                        Discount {invoiceData.discount_type === 'percentage' ? `(${invoiceData.discount}%)` : ''}:
+                      </span>
+                      <span className="font-medium">
+                        -{formatCurrency(
+                          invoiceData.discount_type === 'percentage' 
+                            ? ((invoiceData.subtotal || 0) * (invoiceData.discount || 0)) / 100
+                            : (invoiceData.discount || 0)
+                        )}
+                      </span>
                     </div>
                   )}
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Total Tax:</span>
+                    <span className="font-medium">{formatCurrency(invoiceData.tax || 0)}</span>
+                  </div>
 
                   <div className="flex justify-between items-center text-lg font-semibold pt-3 border-t">
                     <span>Total:</span>

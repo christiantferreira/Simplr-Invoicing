@@ -104,6 +104,7 @@ export interface Invoice {
   items?: InvoiceItem[];
   subtotal: CurrencyAmount;
   discount: CurrencyAmount;
+  discount_type?: 'amount' | 'percentage';
   tax: CurrencyAmount;
   total: CurrencyAmount;
   notes?: string;
@@ -121,6 +122,7 @@ export interface CreateInvoiceData {
   items: InvoiceItem[];
   subtotal: CurrencyAmount;
   discount: CurrencyAmount;
+  discount_type?: 'amount' | 'percentage';
   tax: CurrencyAmount;
   total: CurrencyAmount;
   notes?: string;
@@ -175,6 +177,7 @@ export interface InvoiceFormData {
   items: InvoiceItem[];
   subtotal: CurrencyAmount;
   discount: CurrencyAmount;
+  discount_type?: 'amount' | 'percentage';
   tax: CurrencyAmount;
   total: CurrencyAmount;
   notes?: string;

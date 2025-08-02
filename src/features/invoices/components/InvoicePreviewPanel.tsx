@@ -69,7 +69,8 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
     },
   };
 
-  const style = templateStyles[invoice.templateId as keyof typeof templateStyles] || templateStyles.classic;
+  // Always use classic template
+  const style = templateStyles.classic;
 
   return (
     <div id="invoice-content" className="bg-white border rounded-lg overflow-hidden shadow-sm invoice-content">
@@ -201,8 +202,16 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
             </div>
             {(invoice.discount || 0) > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Discount:</span>
-                <span>-{formatCurrency(invoice.discount || 0)}</span>
+                <span className="text-gray-600">
+                  Discount {invoice.discount_type === 'percentage' ? `(${invoice.discount}%)` : ''}:
+                </span>
+                <span>
+                  -{formatCurrency(
+                    invoice.discount_type === 'percentage' 
+                      ? ((invoice.subtotal || 0) * (invoice.discount || 0)) / 100
+                      : (invoice.discount || 0)
+                  )}
+                </span>
               </div>
             )}
             {(invoice.tax || 0) > 0 && (
