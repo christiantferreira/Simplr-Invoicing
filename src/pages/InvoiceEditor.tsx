@@ -425,7 +425,7 @@ const InvoiceEditor = () => {
                     <div>
                       <Label htmlFor="tax">Tax</Label>
                       <Select
-                        value={selectedTaxOption ? `${selectedTaxOption.name}-${selectedTaxOption.rate}` : 'no-tax'}
+                        value={selectedTaxOption ? enabledTaxOptions.find(opt => opt.name === selectedTaxOption.name && opt.rate === selectedTaxOption.rate)?.value || 'no-tax' : 'no-tax'}
                         onValueChange={(value) => {
                           if (value === 'no-tax') {
                             setSelectedTaxOption(null);

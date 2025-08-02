@@ -61,7 +61,7 @@ export const useTaxConfigurations = () => {
 
   const getEnabledTaxOptions = () => {
     return taxConfigurations.map(tax => ({
-      value: `${tax.tax_name}-${tax.tax_rate}`,
+      value: `${tax.province_code}-${tax.tax_name}-${tax.tax_rate}`,
       label: `${tax.tax_name} (${tax.tax_rate}%)`,
       rate: tax.tax_rate,
       name: tax.tax_name,

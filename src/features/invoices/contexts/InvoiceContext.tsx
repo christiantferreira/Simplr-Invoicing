@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { Client, Invoice, CompanySettings, DashboardStats } from '@/types';
+import { Client, Invoice, CompanySettings, DashboardStats, CreateClientData } from '@/types';
 import { format, addDays, isAfter, startOfMonth, endOfMonth } from 'date-fns';
 import { useSupabaseInvoices } from '../hooks/useSupabaseInvoices';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,7 +77,7 @@ const invoiceReducer = (state: InvoiceState, action: InvoiceAction): InvoiceStat
 
 interface InvoiceContextType {
   state: InvoiceState;
-  addClient: (client: Omit<Client, 'id' | 'createdAt'>) => Promise<Client>;
+  addClient: (client: CreateClientData) => Promise<Client>;
   updateClient: (client: Client) => void;
   deleteClient: (id: string) => void;
   addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt'>) => Promise<Invoice>;
@@ -167,19 +167,28 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   };
 
-  const addClient = async (clientData: Omit<Client, 'id' | 'createdAt'>) => {
+  const addClient = async (clientData: CreateClientData) => {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      // Save client to Supabase
+      // Save client to Supabase using the correct field names
       const { data: clientResult, error: clientError } = await supabase
         .from('clients')
         .insert({
           user_id: user.id,
-          contact_name: clientData.name,
+          name: clientData.name,
           email: clientData.email,
-          phone_number: clientData.phone || null,
-          company_name: clientData.company || null,
+          phone: clientData.phone || null,
+          company: clientData.company || null,
+          province: clientData.province || null,
+          city: clientData.city || null,
+          address_extra_type: clientData.address_extra_type || null,
+          address_extra_value: clientData.address_extra_value || null,
+          street_number: clientData.street_number || null,
+          street_name: clientData.street_name || null,
+          county: clientData.county || null,
+          postal_code: clientData.postal_code || null,
+          // Keep legacy address field for backward compatibility
           address: clientData.address || null,
         })
         .select()
@@ -195,6 +204,14 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         email: clientData.email,
         phone: clientData.phone || '',
         company: clientData.company || '',
+        province: clientData.province || '',
+        city: clientData.city || '',
+        address_extra_type: clientData.address_extra_type || '',
+        address_extra_value: clientData.address_extra_value || '',
+        street_number: clientData.street_number || '',
+        street_name: clientData.street_name || '',
+        county: clientData.county || '',
+        postal_code: clientData.postal_code || '',
         address: clientData.address || '',
         created_at: format(new Date(), 'yyyy-MM-dd'),
       };
