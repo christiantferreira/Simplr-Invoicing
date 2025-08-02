@@ -57,13 +57,17 @@ const InvoiceEditor = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
 
+  // Get tax options before useEffects that depend on it
+  const enabledTaxOptions = getEnabledTaxOptions();
+
   useEffect(() => {
     if (existingInvoice) {
       // Ensure existing invoice items have tax_value for compatibility
+      const currentTaxOptions = getEnabledTaxOptions();
       const itemsWithTaxValue = existingInvoice.items?.map(item => ({
         ...item,
         tax_value: item.tax_value || (item.tax_rate && item.tax_rate > 0 
-          ? enabledTaxOptions.find(opt => opt.rate === item.tax_rate)?.value || 'no-tax'
+          ? currentTaxOptions.find(opt => opt.rate === item.tax_rate)?.value || 'no-tax'
           : 'no-tax')
       })) || [];
       
@@ -79,7 +83,7 @@ const InvoiceEditor = () => {
       // Load next invoice number for new invoices
       getNextInvoiceNumber().then(setNextInvoiceNumber);
     }
-  }, [existingInvoice, state.clients, getNextInvoiceNumber, enabledTaxOptions]);
+  }, [existingInvoice, state.clients, getNextInvoiceNumber]);
 
   useEffect(() => {
     calculateTotals();
@@ -253,8 +257,6 @@ const InvoiceEditor = () => {
       currency: 'CAD',
     }).format(amount);
   };
-
-  const enabledTaxOptions = getEnabledTaxOptions();
 
   return (
     <div className="min-h-screen bg-gray-50">
