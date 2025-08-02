@@ -26,12 +26,46 @@ export const useTaxConfigurations = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // First, get user's province and service provider status from settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('settings')
+        .select('province, is_service_provider')
+        .eq('user_id', user.id)
+        .single();
+
+      if (settingsError) {
+        console.error('Error loading user settings:', settingsError);
+        setError(`Failed to load user settings: ${settingsError.message}`);
+        return;
+      }
+
+      const userProvince = settingsData?.province;
+      const isServiceProvider = settingsData?.is_service_provider;
+      
+      if (!userProvince) {
+        console.warn('User province not found in settings');
+        setTaxConfigurations([]);
+        setLoading(false);
+        return;
+      }
+
+      // Build query for tax configurations
+      let query = supabase
         .from('tax_configurations')
         .select('*')
         .eq('user_id', user.id)
-        .eq('is_enabled', true)
-        .order('province_code', { ascending: true });
+        .eq('province_code', userProvince)
+        .eq('is_enabled', true);
+
+      // For service providers, only show GST/HST (exclude PST, QST, etc.)
+      if (isServiceProvider) {
+        query = query.in('tax_name', ['GST', 'HST']);
+      }
+
+      query = query.order('tax_name', { ascending: true });
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error loading tax configurations:', error);
@@ -40,7 +74,9 @@ export const useTaxConfigurations = () => {
           message: error.message,
           details: error.details,
           hint: error.hint,
-          userId: user.id
+          userId: user.id,
+          userProvince: userProvince,
+          isServiceProvider: isServiceProvider
         });
         setError(`Failed to load tax configurations: ${error.message}`);
         return;

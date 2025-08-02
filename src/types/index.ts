@@ -76,6 +76,9 @@ export interface InvoiceItem {
   quantity: number;
   unit_price: CurrencyAmount;
   total: CurrencyAmount;
+  tax_rate?: number;
+  tax_amount?: CurrencyAmount;
+  tax_name?: string;
 }
 
 export interface CreateInvoiceItemData {

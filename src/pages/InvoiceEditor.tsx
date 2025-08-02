@@ -41,6 +41,9 @@ const InvoiceEditor = () => {
         quantity: 1,
         unit_price: 0,
         total: 0,
+        tax_rate: 0,
+        tax_amount: 0,
+        tax_name: 'No Tax',
       },
     ],
     subtotal: 0,
@@ -51,7 +54,6 @@ const InvoiceEditor = () => {
   });
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [selectedTaxOption, setSelectedTaxOption] = useState<{ rate: number; name: string } | null>(null);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
 
   useEffect(() => {
@@ -68,14 +70,13 @@ const InvoiceEditor = () => {
 
   useEffect(() => {
     calculateTotals();
-  }, [invoiceData.items, invoiceData.discount, selectedTaxOption]);
+  }, [invoiceData.items, invoiceData.discount]);
 
   const calculateTotals = () => {
     const items = invoiceData.items || [];
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const discount = invoiceData.discount || 0;
-    const taxRate = selectedTaxOption?.rate || 0;
-    const taxAmount = (subtotal - discount) * (taxRate / 100);
+    const taxAmount = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0);
     const total = subtotal - discount + taxAmount;
 
     setInvoiceData(prev => ({
@@ -91,7 +92,18 @@ const InvoiceEditor = () => {
     items[index] = { ...items[index], [field]: value };
     
     if (field === 'quantity' || field === 'unit_price') {
-      items[index].total = items[index].quantity * items[index].unit_price;
+      const subtotal = items[index].quantity * items[index].unit_price;
+      items[index].total = subtotal;
+      
+      // Recalculate tax amount based on current tax rate
+      const taxRate = items[index].tax_rate || 0;
+      items[index].tax_amount = subtotal * (taxRate / 100);
+    }
+
+    if (field === 'tax_rate') {
+      // When tax rate changes, recalculate tax amount
+      const subtotal = items[index].quantity * items[index].unit_price;
+      items[index].tax_amount = subtotal * ((value as number) / 100);
     }
 
     setInvoiceData(prev => ({ ...prev, items }));
@@ -105,6 +117,9 @@ const InvoiceEditor = () => {
       quantity: 1,
       unit_price: 0,
       total: 0,
+      tax_rate: 0,
+      tax_amount: 0,
+      tax_name: 'No Tax',
     };
     setInvoiceData(prev => ({
       ...prev,
@@ -361,16 +376,24 @@ const InvoiceEditor = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  <div className="grid grid-cols-12 gap-3 text-sm font-medium text-gray-600 mb-2">
+                    <div className="col-span-4">Description</div>
+                    <div className="col-span-1">Qty</div>
+                    <div className="col-span-2">Price</div>
+                    <div className="col-span-2">Tax</div>
+                    <div className="col-span-2">Total</div>
+                    <div className="col-span-1"></div>
+                  </div>
                   {invoiceData.items?.map((item, index) => (
                     <div key={item.id} className="grid grid-cols-12 gap-3 items-center">
-                      <div className="col-span-5">
+                      <div className="col-span-4">
                         <Input
                           placeholder="Description"
                           value={item.description}
                           onChange={(e) => updateItem(index, 'description', e.target.value)}
                         />
                       </div>
-                      <div className="col-span-2">
+                      <div className="col-span-1">
                         <Input
                           type="number"
                           placeholder="Qty"
@@ -387,7 +410,41 @@ const InvoiceEditor = () => {
                         />
                       </div>
                       <div className="col-span-2">
-                        <span className="text-sm font-medium">{formatCurrency(item.total)}</span>
+                        <Select
+                          value={item.tax_rate ? enabledTaxOptions.find(opt => opt.rate === item.tax_rate)?.value || 'no-tax' : 'no-tax'}
+                          onValueChange={(value) => {
+                            if (value === 'no-tax') {
+                              updateItem(index, 'tax_rate', 0);
+                              updateItem(index, 'tax_name', 'No Tax');
+                            } else {
+                              const option = enabledTaxOptions.find(opt => opt.value === value);
+                              if (option) {
+                                updateItem(index, 'tax_rate', option.rate);
+                                updateItem(index, 'tax_name', option.name);
+                              }
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tax" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="no-tax">No Tax</SelectItem>
+                            {enabledTaxOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="col-span-2">
+                        <div className="text-sm">
+                          <div className="font-medium">{formatCurrency(item.total)}</div>
+                          {item.tax_amount && item.tax_amount > 0 && (
+                            <div className="text-xs text-gray-500">+{formatCurrency(item.tax_amount)} tax</div>
+                          )}
+                        </div>
                       </div>
                       <div className="col-span-1">
                         {(invoiceData.items?.length || 0) > 1 && (
@@ -411,48 +468,20 @@ const InvoiceEditor = () => {
                     <span className="font-medium">{formatCurrency(invoiceData.subtotal || 0)}</span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="discount">Discount</Label>
-                      <Input
-                        id="discount"
-                        type="number"
-                        placeholder="0.00"
-                        value={invoiceData.discount || ''}
-                        onChange={(e) => setInvoiceData(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="tax">Tax</Label>
-                      <Select
-                        value={selectedTaxOption ? enabledTaxOptions.find(opt => opt.name === selectedTaxOption.name && opt.rate === selectedTaxOption.rate)?.value || 'no-tax' : 'no-tax'}
-                        onValueChange={(value) => {
-                          if (value === 'no-tax') {
-                            setSelectedTaxOption(null);
-                          } else {
-                            const option = enabledTaxOptions.find(opt => opt.value === value);
-                            setSelectedTaxOption(option ? { rate: option.rate, name: option.name } : null);
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select tax type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="no-tax">No Tax</SelectItem>
-                          {enabledTaxOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div>
+                    <Label htmlFor="discount">Discount</Label>
+                    <Input
+                      id="discount"
+                      type="number"
+                      placeholder="0.00"
+                      value={invoiceData.discount || ''}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                    />
                   </div>
 
-                  {selectedTaxOption && (
+                  {invoiceData.tax && invoiceData.tax > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Tax ({selectedTaxOption.rate}%):</span>
+                      <span className="text-sm">Total Tax:</span>
                       <span className="font-medium">{formatCurrency(invoiceData.tax || 0)}</span>
                     </div>
                   )}
