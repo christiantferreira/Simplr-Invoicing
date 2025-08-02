@@ -72,6 +72,13 @@ const InvoiceEditor = () => {
     calculateTotals();
   }, [invoiceData.items, invoiceData.discount]);
 
+  // Update invoice data with invoice number for preview
+  useEffect(() => {
+    if (nextInvoiceNumber && !isEditing) {
+      setInvoiceData(prev => ({ ...prev, invoice_number: nextInvoiceNumber }));
+    }
+  }, [nextInvoiceNumber, isEditing]);
+
   const calculateTotals = () => {
     const items = invoiceData.items || [];
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);

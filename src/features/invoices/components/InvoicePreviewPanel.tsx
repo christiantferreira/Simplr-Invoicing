@@ -79,7 +79,7 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
           <div>
             <h1 className="text-2xl font-bold">INVOICE</h1>
             <p className="mt-1 opacity-90">
-              #{invoice.invoiceNumber || 'INV-XXX'}
+              #{invoice.invoice_number || 'INV-XXX'}
             </p>
           </div>
           <div className="text-right">
