@@ -76,7 +76,11 @@ const InvoiceEditor = () => {
     if (!isEditing && hasSavedData()) {
       const savedData = restoreData();
       if (savedData) {
-        setInvoiceData(savedData);
+        // Restore data but preserve invoice_number if it exists in current state
+        setInvoiceData(prev => ({
+          ...savedData,
+          invoice_number: prev.invoice_number || savedData.invoice_number
+        }));
         // Also restore selected client if it exists
         if (savedData.client_id) {
           const client = state.clients.find(c => c.id === savedData.client_id);
@@ -107,12 +111,10 @@ const InvoiceEditor = () => {
       setSelectedClient(client || null);
       setNextInvoiceNumber(existingInvoice.invoice_number);
     } else {
-      // Load next invoice number for new invoices (only if no auto-saved data)
-      if (!hasSavedData()) {
-        getNextInvoiceNumber().then(setNextInvoiceNumber);
-      }
+      // Always load next invoice number for new invoices
+      getNextInvoiceNumber().then(setNextInvoiceNumber);
     }
-  }, [existingInvoice, state.clients, getNextInvoiceNumber, hasSavedData]);
+  }, [existingInvoice, state.clients, getNextInvoiceNumber]);
 
   useEffect(() => {
     calculateTotals();
@@ -121,7 +123,10 @@ const InvoiceEditor = () => {
   // Update invoice data with invoice number for preview
   useEffect(() => {
     if (nextInvoiceNumber && !isEditing) {
-      setInvoiceData(prev => ({ ...prev, invoice_number: nextInvoiceNumber }));
+      setInvoiceData(prev => ({ 
+        ...prev, 
+        invoice_number: nextInvoiceNumber 
+      }));
     }
   }, [nextInvoiceNumber, isEditing]);
 
