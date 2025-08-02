@@ -16,6 +16,16 @@ export const useSupabaseInvoices = () => {
     if (!user) return '001';
 
     try {
+      // Get company settings for prefix and starting number
+      const { data: settingsData } = await supabase
+        .from('settings')
+        .select('invoice_prefix, invoice_start_number')
+        .eq('user_id', user.id)
+        .single();
+
+      const prefix = settingsData?.invoice_prefix || '';
+      const startNumber = settingsData?.invoice_start_number || 1;
+
       // Get the highest invoice number from existing invoices
       const { data: invoicesData } = await supabase
         .from('invoices')
@@ -23,11 +33,17 @@ export const useSupabaseInvoices = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      let nextNumber = 1;
+      let nextNumber = startNumber;
 
       if (invoicesData && invoicesData.length > 0) {
+        // Extract numbers from existing invoice numbers considering the prefix
         const numbers = invoicesData
-          .map(inv => parseInt(inv.invoice_number.replace(/[^0-9]/g, ''), 10))
+          .filter(inv => inv.invoice_number !== null)
+          .map(inv => {
+            // Remove the prefix to extract just the number part
+            const numberPart = inv.invoice_number.replace(prefix, '');
+            return parseInt(numberPart, 10);
+          })
           .filter(num => !isNaN(num));
 
         if (numbers.length > 0) {
@@ -35,7 +51,8 @@ export const useSupabaseInvoices = () => {
         }
       }
 
-      return String(nextNumber).padStart(3, '0');
+      // Return invoice number with prefix
+      return `${prefix}${String(nextNumber).padStart(3, '0')}`;
     } catch (error) {
       console.error('Error generating invoice number:', error);
       return '001'; // Fallback
