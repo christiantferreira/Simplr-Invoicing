@@ -177,7 +177,7 @@ const InvoicePreviewPanel: React.FC<InvoicePreviewPanelProps> = ({
                     </div>
                   </td>
                   <td className="py-3 text-center">{item.quantity}</td>
-                  <td className="py-3 text-right">{formatCurrency(item.unitPrice)}</td>
+                  <td className="py-3 text-right">{formatCurrency(item.unit_price)}</td>
                   <td className="py-3 text-right font-medium">{formatCurrency(item.total)}</td>
                 </tr>
               ))}
